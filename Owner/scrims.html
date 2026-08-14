@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scrims — Infinity Scrims Owner</title>
+ <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+</head>
+<body data-page="scrims">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content" data-skeleton="off">
+        <div class="breadcrumb"><a href="dashboard.html">Dashboard</a> &gt; <span class="current">Scrims</span></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div><h1 class="page-title">Scrims</h1><p class="page-sub">Manage all your created scrims.</p></div>
+          <a href="create-scrim.html" class="btn">+ Create Scrim</a>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;" id="statusTabs">
+          <button class="btn btn-sm" data-status="all">All</button>
+          <button class="btn btn-outline btn-sm" data-status="open">Open</button>
+          <button class="btn btn-outline btn-sm" data-status="full">Full</button>
+          <button class="btn btn-outline btn-sm" data-status="draft">Draft</button>
+          <button class="btn btn-outline btn-sm" data-status="completed">Completed</button>
+        </div>
+
+        <div class="grid-cards" id="scrimGrid" style="grid-template-columns:repeat(3,1fr);">
+          <div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+
+ 
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/owner-common.js"></script>
+  <script>
+    let publishingScrimId = null;
+
+    async function load(status = 'all') {
+      document.querySelectorAll('#statusTabs button').forEach(b => b.className = b.dataset.status === status ? 'btn btn-sm' : 'btn btn-outline btn-sm');
+      try {
+        const data = await Api.get('/scrims/my.php?status=' + status);
+        document.getElementById('scrimGrid').innerHTML = data.scrims.length ? data.scrims.map(s => `
+          <div class="card scrim-card card-hover" style="padding:0;">
+            <img src="${s.banner || 'https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=400&h=200&fit=crop'}">
+            <div class="scrim-card-body">
+              <span class="badge ${s.status==='open'?'badge-success':s.status==='full'?'badge-danger':s.status==='draft'?'badge-muted':'badge-info'}">${s.status}</span>
+              <h4>${escapeHtml(s.title)}</h4>
+              <div class="meta">${s.game_name} • ${new Date(s.match_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}</div>
+              <div class="price-row"><span>${s.booked_slots}/${s.total_slots} Slots</span><span class="price">${s.revenue_txt}</span></div>
+<div style="display:flex; gap:6px;">
+                <a href="edit-scrim.html?id=${s.id}" class="btn btn-sm btn-outline" style="flex:1;">Edit</a>
+                <a href="participants.html?scrim_id=${s.id}" class="btn btn-sm btn-block" style="flex:1;">Participants</a>
+              </div>
+            </div>
+          </div>
+        `).join('') : `<div class="empty-state">No scrims found in this category</div>`;
+      } catch (err) { toast(err.message, 'error'); }
+    }
+ 
+    let currentStatusFilter = 'all';
+    document.querySelectorAll('#statusTabs button').forEach(b => b.addEventListener('click', () => {
+      currentStatusFilter = b.dataset.status;
+      load(currentStatusFilter);
+    }));
+    load();
+
+    // Slot counts (booked/total) come straight from the DB on every call, so
+    // this just needs to re-fetch periodically to feel "live" as users book —
+    // no separate real-time channel needed for this.
+    setInterval(() => load(currentStatusFilter), 15000);
+  </script>
+</body>
+</html>

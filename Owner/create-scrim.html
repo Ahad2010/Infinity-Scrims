@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create New Scrim — Infinity Scrims Owner</title>
+ <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+</head>
+<body data-page="create-scrim">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content" data-skeleton="off" style="max-width:800px;">
+        <div class="breadcrumb"><a href="dashboard.html">Dashboard</a> &gt; <span class="current">Create Scrim</span></div>
+        <h1 class="page-title">Create New Scrim</h1>
+        <p class="page-sub">Fill in the details below to create and publish a new scrim.</p>
+
+        <form id="scrimForm">
+          <div class="card">
+            <div class="form-section">
+              <div class="form-section-title">1. Basic Information</div>
+              <div class="form-row">
+                <div class="field"><label>Scrim Title *</label><input type="text" id="title" required maxlength="80"></div>
+                <div class="field"><label>Game *</label>
+                  <select id="game_id" required>
+                    <option value="">Select Game</option>
+                    <option value="1">PUBG Mobile</option>
+                    <option value="2">BGMI</option>
+                    <option value="3">Valorant</option>
+                    <option value="4">Free Fire</option>
+                    <option value="5">CODM</option>
+                    <option value="6">CS2</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="field"><label>Game Mode</label>
+                  <select id="mode">
+                    <option value="">Select Game Mode</option>
+                    <option>Squad - TPP</option><option>Squad - FPP</option>
+                    <option>Duo</option><option>Solo</option>
+                    <option>5v5 Competitive</option>
+                  </select>
+                </div>
+                <div class="field"><label>Team Size</label>
+                  <select id="team_size">
+                    <option value="">Select Team Size</option>
+                    <option value="1">1 (Solo)</option><option value="2">2 (Duo)</option>
+                    <option value="4">4 (Squad)</option><option value="5">5</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field"><label>Description / Rules *</label><textarea id="description" maxlength="500" required></textarea></div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">2. Date & Time</div>
+              <div class="form-row">
+                <div class="field"><label>Date & Time *</label><input type="datetime-local" id="match_at" required></div>
+                <div class="field"><label>Region</label>
+                  <select id="region">
+                    <option>Asia - South Asia</option><option>Asia - East</option>
+                    <option>Europe</option><option>North America</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">3. Slots & Pricing</div>
+<div class="form-row">
+                <div class="field"><label>Total Slots *</label><input type="number" id="total_slots" min="2" max="200" required><small>Maximum 200 slots</small></div>
+                <div class="field"><label>Price Per Slot (PKR) *</label><input type="number" id="price_per_slot" min="0" required><small>Amount in Pakistani Rupees</small></div>
+              </div>
+              <div class="card" style="background:var(--surface-alt); border:none;">
+                <div style="font-weight:600; font-size:13px; margin-bottom:4px;">Prize Pool</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-bottom:12px;">Kitna prize kis position ko doge — Top 1 zaroori hai, baaki optional.</div>
+                <div class="form-row" style="grid-template-columns:1fr 1fr 1fr;">
+                  <div class="field"><label>Top 1 (PKR) *</label><input type="number" id="prize_top1" min="0" required></div>
+                  <div class="field"><label>Top 2 (PKR) <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label><input type="number" id="prize_top2" min="0" placeholder="0"></div>
+                  <div class="field"><label>Top 3 (PKR) <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label><input type="number" id="prize_top3" min="0" placeholder="0"></div>
+                </div>
+              </div>
+              <div class="card" style="background:var(--surface-alt); border:none;">
+                <div style="font-weight:600; font-size:13px; margin-bottom:4px;">Slot Settings</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-bottom:12px;">Configure how slots will be displayed and booked.</div>
+                <div class="form-row">
+                  <div class="field"><label>Slot Type</label>
+                    <select id="slot_type">
+                      <option value="team_slot">Team Slot</option>
+                      <option value="player_slot">Player Slot</option>
+                    </select>
+                    <small>Team will book multiple slots together</small>
+                  </div>
+                  <div class="field"><label>Max Players Per Slot</label>
+                    <select id="max_players_per_slot">
+                      <option value="">Select</option>
+                      <option value="1">1</option><option value="2">2</option><option value="4">4</option>
+                    </select>
+                    <small>How many players in one slot</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">4. Additional Details</div>
+              <div class="form-row">
+                <div class="field"><label>Map</label><input type="text" id="map" placeholder="e.g. Erangel"></div>
+                <div class="field"><label>Platform</label>
+                  <select id="platform"><option value="">Select Platform</option><option>Mobile</option><option>PC</option><option>Console</option></select>
+                </div>
+              </div>
+<div class="form-row">
+                <div class="field"><label>Map Pool</label><input type="text" id="map_pool" placeholder="Erangel, Miramar, Livik"><small>Comma separated</small></div>
+                <div class="field"><label>Password (Optional)</label><input type="text" id="access_password" placeholder="Leave empty if no password"></div>
+              </div>
+<div class="field">
+                <label>Group Link <span style="color:var(--text-muted); font-weight:400;">(WhatsApp/Discord — sent to confirmed teams once payment is approved)</span></label>
+                <input type="url" id="group_link" placeholder="https://chat.whatsapp.com/...">
+              </div>
+<div class="field">
+                <label>YouTube Live Stream Link <span style="color:var(--text-muted); font-weight:400;">(optional — shown to confirmed teams)</span></label>
+                <input type="url" id="live_stream_link" placeholder="https://youtube.com/watch?v=...">
+              </div>
+            </div>
+            <div class="form-section">
+              <div class="form-section-title">5. Media (Optional)</div>
+              <div class="form-row">
+                <div class="field">
+                  <label>Scrim Banner</label>
+                  <div class="dropzone" id="bannerDrop">
+                    <div class="hint" id="bannerHint">Upload Banner Image — Max 2MB (PNG/JPG/WEBP)</div>
+                    <input type="file" id="bannerInput" accept="image/*" style="display:none;">
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Additional Images</label>
+                  <div class="dropzone" id="imagesDrop">
+                    <div class="hint" id="imagesHint">Upload Images — Max 5 images, 2MB each</div>
+                    <input type="file" id="imagesInput" accept="image/*" multiple style="display:none;">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section" style="margin-bottom:10px;">
+              <div class="form-section-title">6. Publish Settings</div>
+              <div class="form-row">
+                <div>
+                  <label style="font-size:12px; font-weight:600; display:block; margin-bottom:8px;">Status</label>
+                  <label class="radio-card" style="margin-bottom:8px;">
+                    <input type="radio" name="pubstatus" value="draft" checked>
+                    <div><div class="title">Draft</div><div class="desc">Save as draft and publish later</div></div>
+                  </label>
+                  <label class="radio-card">
+                    <input type="radio" name="pubstatus" value="open">
+                    <div><div class="title">Publish Now</div><div class="desc">Make scrim live immediately</div></div>
+                  </label>
+                </div>
+                <div>
+                  <label style="font-size:12px; font-weight:600; display:block; margin-bottom:8px;">Visibility</label>
+                  <label class="radio-card" style="margin-bottom:8px;">
+                    <input type="radio" name="visibility" value="public" checked>
+                    <div><div class="title">Public</div><div class="desc">Anyone can see and join</div></div>
+                  </label>
+                  <label class="radio-card">
+                    <input type="radio" name="visibility" value="private">
+                    <div><div class="title">Private</div><div class="desc">Only users with link can view</div></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+              <button type="button" class="btn btn-outline btn-block" onclick="submitScrim('draft')">Save as Draft</button>
+              <button type="button" class="btn btn-block" onclick="submitScrim('publish')">Publish Scrim</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/owner-common.js"></script>
+  <script>
+    document.getElementById('bannerDrop').insertAdjacentHTML('afterbegin', ICONS.upload);
+    document.getElementById('imagesDrop').insertAdjacentHTML('afterbegin', ICONS.image);
+
+    document.getElementById('bannerDrop').addEventListener('click', () => document.getElementById('bannerInput').click());
+    document.getElementById('bannerInput').addEventListener('change', e => {
+      if (e.target.files[0]) { document.getElementById('bannerHint').textContent = e.target.files[0].name; document.getElementById('bannerDrop').classList.add('has-file'); }
+    });
+    document.getElementById('imagesDrop').addEventListener('click', () => document.getElementById('imagesInput').click());
+    document.getElementById('imagesInput').addEventListener('change', e => {
+      if (e.target.files.length) { document.getElementById('imagesHint').textContent = e.target.files.length + ' image(s) selected'; document.getElementById('imagesDrop').classList.add('has-file'); }
+    });
+
+    async function submitScrim(mode) {
+      const title = document.getElementById('title').value;
+      const game_id = document.getElementById('game_id').value;
+      const match_at = document.getElementById('match_at').value;
+      const total_slots = document.getElementById('total_slots').value;
+      const price_per_slot = document.getElementById('price_per_slot').value;
+const description = document.getElementById('description').value;
+      const prize_top1 = document.getElementById('prize_top1').value;
+
+      if (!title || !game_id || !match_at || !total_slots || !price_per_slot || !description || !prize_top1) {
+        return toast('Please fill all required (*) fields', 'error');
+      }
+
+      const fd = new FormData();
+      fd.append('title', title);
+      fd.append('game_id', game_id);
+      fd.append('match_at', match_at);
+      fd.append('total_slots', total_slots);
+fd.append('price_per_slot', price_per_slot);
+      fd.append('prize_top1', prize_top1);
+      fd.append('prize_top2', document.getElementById('prize_top2').value || 0);
+      fd.append('prize_top3', document.getElementById('prize_top3').value || 0);
+      fd.append('description', description);
+      fd.append('mode', document.getElementById('mode').value);
+      fd.append('team_size', document.getElementById('team_size').value);
+      fd.append('region', document.getElementById('region').value);
+      fd.append('slot_type', document.getElementById('slot_type').value);
+      fd.append('max_players_per_slot', document.getElementById('max_players_per_slot').value);
+      fd.append('map', document.getElementById('map').value);
+      fd.append('platform', document.getElementById('platform').value);
+fd.append('access_password', document.getElementById('access_password').value);
+fd.append('group_link', document.getElementById('group_link').value.trim());
+      fd.append('live_stream_link', document.getElementById('live_stream_link').value.trim());      fd.append('map_pool', document.getElementById('map_pool').value);
+      fd.append('status', mode === 'publish' ? 'open' : 'draft');
+      fd.append('visibility', document.querySelector('input[name="visibility"]:checked').value);
+
+      const bannerFile = document.getElementById('bannerInput').files[0];
+      if (bannerFile) fd.append('banner', bannerFile);
+      const imageFiles = document.getElementById('imagesInput').files;
+      for (let i = 0; i < imageFiles.length; i++) fd.append('images[]', imageFiles[i]);
+
+      try {
+        const data = await Api.postForm('/scrims/create.php', fd);
+        toast(mode === 'publish' ? 'Scrim published!' : 'Scrim saved as draft', 'success');
+        setTimeout(() => window.location.href = 'scrims.html', 700);
+      } catch (err) { toast(err.message, 'error'); }
+    }
+  </script>
+</body>
+</html>

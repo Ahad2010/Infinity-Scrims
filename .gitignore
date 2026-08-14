@@ -1,0 +1,9 @@
+backend/.env
+.vercel
+node_modules
+backend/php_error.log
+backend/uploads/*
+!backend/uploads/*/.gitkeep
+!backend/uploads/.htaccess
+.DS_Store
+ 

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboard — Infinity Scrims</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.webp">
+  <style>
+    /* ---------- Segmented pill tabs ---------- */
+    .segmented {
+      display: inline-flex; gap: 4px; padding: 4px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      max-width: 100%; overflow-x: auto;
+    }
+    .segmented button {
+      border: none; background: none; cursor: pointer; color: var(--text-muted);
+      font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 9px;
+      white-space: nowrap; transition: background-color .15s ease, color .15s ease;
+    }
+    .segmented button:hover { color: var(--text); }
+    .segmented button.active { background: var(--accent); color: var(--accent-text); }
+
+    /* ---------- Leaderboard table ---------- */
+    .lb-card { padding: 0; overflow: hidden; }
+    /* The table scrolls sideways as a whole on narrow screens (swipe to see
+       Matches/Wins/Win Rate/Points) instead of hiding columns — nothing is
+       ever unreachable, it's just a horizontal slide. */
+    .lb-table { width: 100%; min-width: 580px; border-collapse: collapse; }
+    .lb-table thead th {
+      text-align: left; font-size: 12px; font-weight: 600; color: var(--text-muted);
+      padding: 14px 18px; border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    .lb-table tbody td {
+      padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle;
+    }
+    .lb-table tbody tr:last-child td { border-bottom: none; }
+    .lb-table tbody tr { transition: background-color .15s ease; }
+    .lb-table tbody tr:hover { background: var(--surface-alt); }
+    .lb-table .num-col { text-align: right; }
+    .lb-table th.num-col { text-align: right; }
+    /* Whole table slides together as one unit when swiped — nothing stays pinned */
+
+    .rank { font-weight: 700; font-size: 13px; color: var(--text-muted); width: 34px; }
+    .rank-medal {
+      width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800;
+    }
+    .rank-1 { background: linear-gradient(135deg,#fde68a,#f59e0b); color: #7c4a03; }
+    .rank-2 { background: linear-gradient(135deg,#e5e7eb,#9ca3af); color: #374151; }
+    .rank-3 { background: linear-gradient(135deg,#fcd9b6,#c2703d); color: #6b3410; }
+
+    .team-cell { display: flex; align-items: center; gap: 10px; }
+    .team-cell .rank { flex-shrink: 0; }
+    .team-cell .rank-medal { flex-shrink: 0; }
+    .team-avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: #0c0d10; color: #fff; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800;
+      object-fit: cover;
+    }
+    .team-name { font-weight: 700; font-size: 13.5px; white-space: nowrap; }
+    .verified-pill {
+      background: var(--success-bg); color: var(--success); font-size: 10.5px; font-weight: 700;
+      padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+    }
+    .win-rate { color: var(--success); font-weight: 700; }
+    .points { font-weight: 700; }
+
+    .scroll-hint {
+      display: none; align-items: center; gap: 6px; padding: 10px 18px; font-size: 11.5px;
+      color: var(--text-muted); border-top: 1px solid var(--border);
+    }
+
+    /* Mobile: table slides sideways instead of hiding columns */
+    @media (max-width: 760px) {
+      .lb-table thead th, .lb-table tbody td { padding: 12px 14px; }
+      .scroll-hint { display: flex; }
+    }
+  </style>
+</head>
+<body data-page="leaderboard">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content">
+        <div class="breadcrumb"><a href="dashboard.html">Dashboard</a> &gt; <span class="current">Leaderboard</span></div>
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+          <div>
+            <h1 class="page-title">Leaderboard</h1>
+            <p class="page-sub">Top performing teams on Infinity Scrims.</p>
+          </div>
+          <div id="lbUpdatedAt" style="font-size:12px; color:var(--text-muted); white-space:nowrap; padding-top:6px;"></div>
+        </div>
+
+        <div class="segmented" id="rangeTabs" style="margin-bottom:20px;">
+          <button class="active" data-range="today">Today</button>
+          <button data-range="week">7 Day</button>
+          <button data-range="all">All Time</button>
+        </div>
+
+        <div class="card lb-card">
+          <div class="table-wrap">
+            <table class="lb-table">
+              <thead>
+<tr>
+                  <th>Team</th>
+                  <th class="num-col">Points</th>
+                  <th class="num-col">Kills</th>
+                  <th class="num-col">Wins</th>
+                  <th class="num-col">Matches</th>
+                </tr>
+              </thead>
+              <tbody id="lbBody"></tbody>
+            </table>
+          </div>
+          <div class="scroll-hint">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+            Swipe left to see Matches, Kills, Wins &amp; Points
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="support-widget-mount"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/demo-seed.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/support-widget.js"></script>
+  <script>
+    /**
+     * Real endpoint: GET /results/leaderboard.php?range=today|week|all
+     * Response: { range, leaderboard: [{team_id, team_name, tag, logo, matches,
+     *             total_kills, points, wins, rank}], updated_at }
+     * Only counts PUBLISHED results — a fresh/empty backend will show "no teams yet"
+     * until an owner uploads and publishes at least one result.
+     */
+    async function loadRange(range) {
+      showSkeleton();
+      try {
+        const data = await Api.get('/results/leaderboard.php?range=' + encodeURIComponent(range));
+        document.getElementById('lbUpdatedAt').textContent = data.updated_at ? 'Updated ' + data.updated_at : '';
+        paintRows(data.leaderboard);
+      } catch (err) {
+        document.getElementById('lbUpdatedAt').textContent = '';
+        paintRows([]);
+        toast(err.message || 'Could not load the leaderboard.', 'error');
+      }
+    }
+
+    function showSkeleton() {
+      document.getElementById('lbBody').innerHTML = Array.from({ length: 6 }).map(() =>
+        `<tr><td colspan="5"><div class="skeleton" style="height:20px;"></div></td></tr>`
+      ).join('');
+    }
+
+    function rankCell(i) {
+      if (i === 0) return `<div class="rank-medal rank-1">1</div>`;
+      if (i === 1) return `<div class="rank-medal rank-2">2</div>`;
+      if (i === 2) return `<div class="rank-medal rank-3">3</div>`;
+      return `<span class="rank">${i + 1}</span>`;
+    }
+
+    function teamLogo(r) {
+      if (r.logo) return `<img class="team-avatar" src="${escapeHtml(r.logo)}" alt="">`;
+      const initials = (r.team_name || '?').trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join('');
+      return `<div class="team-avatar">${initials}</div>`;
+    }
+
+    function paintRows(rows) {
+      document.getElementById('lbBody').innerHTML = rows.length ? rows.map((r, i) => `
+        <tr>
+          <td>
+            <div class="team-cell">
+              ${rankCell(i)}
+              ${teamLogo(r)}
+              <span class="team-name">${escapeHtml(r.team_name)}</span>
+              ${r.tag ? `<span class="badge badge-muted" style="margin-left:4px;">${escapeHtml(r.tag)}</span>` : ''}
+            </div>
+          </td>
+<td class="num-col points">${r.points}</td>
+          <td class="num-col">${r.total_kills}</td>
+          <td class="num-col">${r.wins}</td>
+          <td class="num-col">${r.matches}</td>
+        </tr>
+      `).join('') : `<tr><td colspan="5"><div class="empty-state" style="padding:28px 0;">No published results in this period yet — check back after the next scrim.</div></td></tr>`;
+    }
+
+    loadRange('today');
+
+    document.querySelectorAll('#rangeTabs button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#rangeTabs button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadRange(btn.dataset.range);
+      });
+    });
+  </script>
+</body>
+</html>

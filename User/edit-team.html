@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Team — Infinity Scrims</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.webp">
+</head>
+<body data-page="my-teams">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content">
+        <div class="breadcrumb"><a href="dashboard.html">Dashboard</a> &gt; <a href="my-teams.html">My Teams</a> &gt; <span class="current">Edit Team</span></div>
+        <h1 class="page-title">Edit Team</h1>
+        <p class="page-sub">Only fields you change will be updated.</p>
+
+        <div id="loadingState" class="card" style="max-width:640px;">
+          <div class="skeleton skeleton-line" style="width:40%; margin-bottom:14px;"></div>
+          <div class="skeleton skeleton-card"></div>
+        </div>
+
+        <div class="card" style="max-width:640px; display:none;" id="editForm">
+          <input type="hidden" id="etTeamId">
+
+          <div class="form-section">
+            <div class="form-section-title">1. Team Information</div>
+            <div class="field"><label>Team Name</label><input type="text" id="etName"></div>
+            <div class="form-row">
+              <div class="field"><label>Tag</label><input type="text" id="etTag" maxlength="10"></div>
+              <div class="field">
+                <label>Team Logo <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label>
+                <div class="logo-upload-row">
+                  <div class="logo-upload-preview" id="etLogoPreview"></div>
+                  <div class="logo-upload-input"><input type="file" id="etLogo" accept="image/png,image/jpeg,image/webp"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section" style="margin-bottom:8px;">
+            <div class="form-section-title">2. Team Contact</div>
+            <div class="form-row">
+              <div class="field"><label>Phone</label><input type="tel" id="etPhone" placeholder="03xx-xxxxxxx"></div>
+              <div class="field"><label>WhatsApp</label><input type="tel" id="etWhatsapp" placeholder="03xx-xxxxxxx"></div>
+            </div>
+            <div class="field"><label>Discord ID</label><input type="text" id="etDiscord" placeholder="username#1234"></div>
+          </div>
+
+          <p id="etMsg" class="text-danger" style="font-size:12px; display:none; margin-bottom:12px;"></p>
+          <div style="display:flex; gap:10px;">
+            <a href="my-teams.html" class="btn btn-outline">Cancel</a>
+            <button class="btn" id="etSubmitBtn" onclick="submitEditTeam()">Save Changes</button>
+          </div>
+        </div>
+
+        <div id="notFoundState" class="card empty-state" style="max-width:640px; display:none;">
+          Team not found, or you're not its captain.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+  <div id="support-widget-mount"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/support-widget.js"></script>
+  <script>
+    function setLogoPreview(preview, src) {
+      preview.innerHTML = src ? `<img src="${src}" alt="Logo preview">` : ICONS.image;
+    }
+    const etLogoInput = document.getElementById('etLogo');
+    const etLogoPreview = document.getElementById('etLogoPreview');
+    etLogoInput.addEventListener('change', () => {
+      const file = etLogoInput.files[0];
+      if (!file) { setLogoPreview(etLogoPreview, null); return; }
+      const reader = new FileReader();
+      reader.onload = (e) => setLogoPreview(etLogoPreview, e.target.result);
+      reader.readAsDataURL(file);
+    });
+
+    // ---------------- Load team to edit ----------------
+    const teamId = Number(new URLSearchParams(window.location.search).get('id'));
+
+    async function loadTeamForEdit() {
+      if (!teamId) { showNotFound(); return; }
+      try {
+        const data = await Api.get('/teams/my.php');
+        const t = (data.teams || []).find(x => x.id === teamId);
+        if (!t || t.my_role !== 'captain') { showNotFound(); return; }
+
+        document.getElementById('etTeamId').value = t.id;
+        document.getElementById('etName').value = t.name;
+        document.getElementById('etTag').value = t.tag || '';
+        document.getElementById('etPhone').value = t.phone || '';
+        document.getElementById('etWhatsapp').value = t.whatsapp || '';
+        document.getElementById('etDiscord').value = t.discord_id || '';
+        setLogoPreview(etLogoPreview, t.logo_url || null);
+
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('editForm').style.display = 'block';
+      } catch (err) {
+        showNotFound();
+      }
+    }
+
+    function showNotFound() {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('notFoundState').style.display = 'block';
+    }
+
+    async function submitEditTeam() {
+      const msg = document.getElementById('etMsg');
+      msg.style.display = 'none';
+      const btn = document.getElementById('etSubmitBtn');
+      btn.disabled = true; btn.textContent = 'Saving...';
+      try {
+        const fd = new FormData();
+        fd.append('team_id', document.getElementById('etTeamId').value);
+        fd.append('name', document.getElementById('etName').value.trim());
+        fd.append('tag', document.getElementById('etTag').value.trim());
+        fd.append('phone', document.getElementById('etPhone').value.trim());
+        fd.append('whatsapp', document.getElementById('etWhatsapp').value.trim());
+        fd.append('discord_id', document.getElementById('etDiscord').value.trim());
+        const logoFile = etLogoInput.files[0];
+        if (logoFile) fd.append('logo', logoFile);
+
+        await Api.postForm('/teams/update.php', fd);
+        window.location.href = 'my-teams.html?updated=1';
+      } catch (err) {
+        msg.textContent = err.message || 'Could not update team.';
+        msg.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'Save Changes';
+      }
+    }
+
+    loadTeamForEdit();
+  </script>
+</body>
+</html>

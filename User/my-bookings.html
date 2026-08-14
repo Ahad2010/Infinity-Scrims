@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Bookings — Infinity Scrims</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.webp">
+</head>
+<body data-page="my-bookings">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content">
+        <div class="breadcrumb"><a href="dashboard.html">Dashboard</a> &gt; <span class="current">My Bookings</span></div>
+        <h1 class="page-title">My Bookings</h1>
+        <p class="page-sub">View and manage all your scrim bookings.</p>
+
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
+          <div style="display:flex; gap:8px; flex-wrap:wrap;" id="statusTabs">
+            <button class="btn btn-sm" data-status="all">All Bookings</button>
+            <button class="btn btn-outline btn-sm" data-status="pending">Pending</button>
+            <button class="btn btn-outline btn-sm" data-status="confirmed">Confirmed</button>
+            <button class="btn btn-outline btn-sm" data-status="past">Past</button>
+            <button class="btn btn-outline btn-sm" data-status="cancelled">Cancelled</button>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:16px;" id="bookingList"></div>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+
+  <div id="support-widget-mount"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/demo-seed.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/support-widget.js"></script>
+  <script>
+    /**
+     * Real endpoint: GET /bookings/my.php?filter=all|pending|confirmed|past
+     * Row shape: { id, status, amount, amount_txt, created_at, slot_number,
+     *   scrim_id, title, banner, mode, map, match_at, game_name, team_name,
+     *   payment_status, needs_payment }
+     * Cancel: POST /bookings/cancel.php {booking_id}
+     */
+    async function loadBookings(filter = 'all') {
+      const list = document.getElementById('bookingList');
+      list.innerHTML = skeleton(3);
+      try {
+        const apiFilter = filter === 'cancelled' ? 'all' : filter;
+        const data = await Api.get('/bookings/my.php?filter=' + apiFilter);
+        let rows = data.bookings || [];
+        if (filter === 'cancelled') rows = rows.filter(b => b.status === 'cancelled');
+        paintBookings(rows);
+      } catch (err) {
+        list.innerHTML = `<div class="empty-state">${escapeHtml(err.message || 'Could not load bookings.')}</div>`;
+      }
+    }
+
+    function statusBadge(b) {
+      if (b.status === 'confirmed') return { text: '✓ Confirmed', cls: 'badge-success' };
+      if (b.status === 'rejected') return { text: 'Payment Rejected', cls: 'badge-danger' };
+      if (b.status === 'cancelled') return { text: 'Cancelled', cls: 'badge-muted' };
+      // pending
+      if (b.needs_payment) return { text: '⏳ Pending Payment', cls: 'badge-warning' };
+      return { text: '⏳ Pending Approval', cls: 'badge-warning' };
+    }
+
+    function paintBookings(rows) {
+      const list = document.getElementById('bookingList');
+      if (!rows.length) {
+        list.innerHTML = `
+          <div class="card" style="text-align:center; padding:40px 20px;">
+            <div style="font-size:38px; margin-bottom:10px;">📭</div>
+            <h4 style="margin-bottom:6px;">No bookings here</h4>
+            <p style="color:var(--text-muted); font-size:13px; margin-bottom:16px;">Book a slot on a scrim from your Dashboard to see it here.</p>
+            <a href="dashboard.html" class="btn">Go to Dashboard</a>
+          </div>`;
+        return;
+      }
+
+      const isPast = (matchAt) => new Date(matchAt.replace(' ', 'T')) < new Date();
+
+      list.innerHTML = rows.map(b => {
+        const badge = statusBadge(b);
+        const matchDate = new Date(b.match_at.replace(' ', 'T'));
+        const matchStr = matchDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+          + ', ' + matchDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        const past = isPast(b.match_at);
+
+        // Joining the group / viewing details is useful to the WHOLE team,
+        // not just whoever clicked "book" — only booking-modifying actions
+        // (pay, cancel) stay restricted to the booker.
+const whatsappBtn = b.group_link
+          ? `<a href="${escapeHtml(b.group_link)}" target="_blank" class="btn btn-sm btn-block" style="background:#25D366; color:#fff; margin-bottom:8px; display:flex; align-items:center; justify-content:center; gap:6px;">
+               <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm5.8 14.2c-.25.7-1.4 1.3-2 1.4-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3 0-1.4.75-2.1 1-2.4.25-.3.55-.35.75-.35h.5c.15 0 .35 0 .55.4.2.5.7 1.7.75 1.85.05.15.1.3 0 .5-.1.2-.15.3-.3.45l-.45.5c-.15.15-.3.3-.15.6.15.3.7 1.2 1.5 1.9 1 .95 1.9 1.25 2.2 1.4.3.15.5.1.65-.05.2-.2.4-.5.6-.75.15-.2.3-.25.5-.15.2.05 1.4.65 1.6.75.2.1.35.15.4.25.05.15.05.65-.2 1.3z"/></svg>
+               Join WhatsApp Group
+             </a>`
+          : '';
+const streamBtn = b.live_stream_link
+          ? `<a href="${escapeHtml(b.live_stream_link)}" target="_blank" class="btn btn-sm btn-block" style="background:#FF0000; color:#fff; margin-bottom:8px; display:flex; align-items:center; justify-content:center; gap:6px;">
+               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>
+               Watch Live Stream
+             </a>`
+          : '';
+        const detailsLink = `<a href="scrim.html?id=${b.scrim_id}" style="display:block; text-align:center; font-size:12px; color:var(--text-muted); text-decoration:underline; margin-top:${(whatsappBtn || streamBtn) ? '2px' : '0'};">View Details</a>`;
+ 
+
+        let actionsHtml = '';
+        if (b.status === 'pending' && b.needs_payment) {
+          actionsHtml = b.booked_by_me
+            ? `<a href="payment.html?booking_id=${b.id}" class="btn btn-sm btn-block" style="margin-bottom:8px;">Complete Payment</a>
+               <button class="btn btn-outline btn-sm btn-block" onclick="cancelBooking(${b.id})">Cancel Booking</button>`
+            : `<div style="font-size:11.5px; color:var(--text-muted); text-align:center;">Waiting for ${escapeHtml(b.booked_by_username)} to complete payment.</div>`;
+        } else if (b.status === 'pending' && !b.needs_payment) {
+          actionsHtml = b.booked_by_me
+            ? `<a href="payments.html" class="btn btn-outline btn-sm btn-block">View Payment Status</a>`
+            : `<div style="font-size:11.5px; color:var(--text-muted); text-align:center;">Payment submitted — awaiting owner approval.</div>`;
+} else if (b.status === 'confirmed' && !past) {
+          actionsHtml = (whatsappBtn || streamBtn)
+            ? whatsappBtn + streamBtn + detailsLink
+            : `<a href="scrim.html?id=${b.scrim_id}" class="btn btn-sm btn-block">View Details</a>`;
+        } else if (b.status === 'confirmed' && past) {
+          actionsHtml = `<a href="scrim.html?id=${b.scrim_id}" class="btn btn-outline btn-sm btn-block">Match Details</a>`;
+        } else if (b.status === 'rejected') {
+          actionsHtml = b.booked_by_me
+            ? `<a href="scrim.html?id=${b.scrim_id}" class="btn btn-outline btn-sm btn-block">Try Another Slot</a>`
+            : '';
+        }
+
+        return `
+        <div class="card" style="display:flex; gap:18px; flex-wrap:wrap;">
+          <img src="${b.banner || 'https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=200&h=200&fit=crop'}" style="width:100px;height:100px;border-radius:10px;object-fit:cover;">
+          <div style="flex:1; min-width:220px;">
+            <span class="badge ${badge.cls}" style="margin-bottom:8px;">${badge.text}</span>
+            <h4 style="font-size:16px; margin-bottom:6px;">${escapeHtml(b.title)}</h4>
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:2px;">${escapeHtml(b.mode || b.game_name || '')} ${b.map ? '• ' + escapeHtml(b.map) : ''}</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:2px;">📅 ${matchStr} (PKT)</div>
+            <div style="font-size:12px; color:var(--text-muted);">Team: ${escapeHtml(b.team_name || '-')}</div>
+            <div style="font-size:12px; color:var(--text-muted);">Booked by: ${b.booked_by_me ? 'You' : escapeHtml(b.booked_by_username)}</div>
+          </div>
+          <div style="min-width:150px; font-size:12px;">
+            <div class="dl-row" style="padding:4px 0;"><span class="k">Slot Number</span><span class="v">#${b.slot_number}</span></div>
+            <div class="dl-row" style="padding:4px 0; border-bottom:none;"><span class="k">Total Amount</span><span class="v">${b.amount_txt}</span></div>
+          </div>
+          <div style="min-width:200px;">
+            ${actionsHtml}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function cancelBooking(id) {
+      if (!confirm('Cancel this booking? This will release your slot.')) return;
+      try {
+        await Api.post('/bookings/cancel.php', { booking_id: id });
+        toast('Booking cancelled.', 'success');
+        loadBookings(currentFilter());
+      } catch (err) {
+        toast(err.message || 'Could not cancel booking.', 'error');
+      }
+    }
+
+    function currentFilter() {
+      const active = document.querySelector('#statusTabs .btn:not(.btn-outline)');
+      return active ? active.dataset.status : 'all';
+    }
+
+    document.querySelectorAll('#statusTabs button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#statusTabs button').forEach(b => b.className = 'btn btn-outline btn-sm');
+        btn.className = 'btn btn-sm';
+        loadBookings(btn.dataset.status);
+      });
+    });
+
+    loadBookings('all');
+  </script>
+</body>
+</html>

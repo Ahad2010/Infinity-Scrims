@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Earnings — Infinity Scrims Owner</title>
+ <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+</head>
+<body data-page="earnings">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content" data-skeleton="off">
+        <div class="breadcrumb"><a href="dashboard.html">Dashboard</a> &gt; <span class="current">Earnings</span></div>
+        <h1 class="page-title">Earnings</h1>
+        <p class="page-sub">Your revenue overview across all scrims.</p>
+
+<div class="stat-grid" id="statGrid" style="grid-template-columns:repeat(5,1fr);">
+            <div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>
+        </div>
+
+        <div class="table-wrap card">
+          <div class="card-title">Revenue by Scrim</div>
+          <table>
+<thead><tr><th>Scrim</th><th>Match Date</th><th>Paid Slots</th><th>Revenue</th><th>Prize Pool</th><th>Profit/Loss</th></tr></thead>
+            <tbody id="tableBody"><tr><td colspan="4"><div class="skeleton skeleton-line"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/owner-common.js"></script>
+  <script>
+async function load() {
+      try {
+        const data = await Api.get('/payments/earnings.php');
+        document.getElementById('statGrid').innerHTML = `
+          <div class="card stat-card"><div class="icon">${ICONS.wallet2}</div><div class="label">Total Earnings</div><div class="value">${data.total_txt}</div></div>
+          <div class="card stat-card"><div class="icon">${ICONS.calendar}</div><div class="label">Today</div><div class="value">${data.today_txt}</div></div>
+          <div class="card stat-card"><div class="icon">${ICONS.chartBar}</div><div class="label">This Month</div><div class="value">${data.month_txt}</div></div>
+          <div class="card stat-card"><div class="icon">${ICONS.trophy}</div><div class="label">Prize Pool Paid</div><div class="value">${data.prize_paid_txt}</div></div>
+<div class="card stat-card"><div class="icon">${ICONS.chartBar}</div><div class="label">Net ${data.is_profit ? 'Profit' : 'Loss'}</div><div class="value" style="color:${data.is_profit ? 'var(--success)' : 'var(--danger)'};">${data.net_profit_txt}</div></div>        `;
+        document.getElementById('tableBody').innerHTML = data.by_scrim.length ? data.by_scrim.map(s => `
+          <tr>
+            <td>${escapeHtml(s.title)}</td>
+            <td>${new Date(s.match_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</td>
+            <td>${s.paid_slots}</td>
+            <td><b>${money(s.revenue)}</b></td>
+            <td>${s.prize_pool_txt}</td>
+            <td style="color:${s.profit === null ? 'var(--text-muted)' : (s.profit >= 0 ? 'var(--success)' : 'var(--danger)')};"><b>${s.profit_txt}</b></td>
+          </tr>
+        `).join('') : `<tr><td colspan="6"><div class="empty-state">No earnings yet</div></td></tr>`;
+      } catch (err) { toast(err.message, 'error'); }
+    }
+    load();
+  </script>
+</body>
+</html>

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — Infinity Scrims</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.webp">
+</head>
+<body>
+  <div class="authx-shell">
+    <div class="authx-wrap">
+      <!-- Left: branding + illustration -->
+      <div class="authx-side">
+        <div class="authx-side-inner">
+          <div class="authx-logo">
+            <img src="assets/img/logo-mark-dark.png" alt="Infinity Scrims">
+            <span>INFINITY SCRIMS</span>
+          </div>
+          <p class="authx-tagline">Compete. Climb. Conquer.</p>
+          <p class="authx-subtext">Join thousands of players in Pakistan's most competitive scrim platform.</p>
+
+          <div class="authx-illustration">
+            <svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="glow2" cx="50%" cy="55%" r="60%">
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
+                  <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="trophyGrad2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#ffffff"/>
+                  <stop offset="100%" stop-color="#c8ccd4"/>
+                </linearGradient>
+              </defs>
+
+              <ellipse cx="130" cy="185" rx="95" ry="14" fill="url(#glow2)"/>
+
+              <circle cx="131" cy="98" r="46" fill="none" stroke="#3a3b40" stroke-width="1" stroke-dasharray="3 4" opacity="0.8"/>
+              <circle cx="131" cy="98" r="32" fill="none" stroke="#3a3b40" stroke-width="1" opacity="0.5"/>
+
+              <path d="M56 34l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" fill="#ffffff" opacity="0.85"/>
+              <path d="M204 46l1.6 4.6L210 52l-4.4 1.4L204 58l-1.6-4.6L198 52l4.4-1.4z" fill="#ffffff" opacity="0.55"/>
+
+              <g>
+                <rect x="58" y="146" width="44" height="49" rx="4" fill="#17181c" stroke="#3a3b40" stroke-width="1.5"/>
+                <text x="80" y="176" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#8a8e98">2</text>
+
+                <rect x="108" y="126" width="46" height="69" rx="4" fill="#1c1d21" stroke="#4a4c52" stroke-width="1.5"/>
+                <text x="131" y="166" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">1</text>
+
+                <rect x="160" y="158" width="44" height="37" rx="4" fill="#17181c" stroke="#3a3b40" stroke-width="1.5"/>
+                <text x="182" y="182" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#8a8e98">3</text>
+              </g>
+
+              <g transform="translate(131,98)">
+                <path d="M-18 -20 H18 V4 C18 15 10 23 0 23 C-10 23 -18 15 -18 4 Z" fill="url(#trophyGrad2)"/>
+                <path d="M-18 -14 C-30 -14 -30 4 -16 6" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M18 -14 C30 -14 30 4 16 6" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+                <rect x="-4" y="23" width="8" height="10" fill="#c8ccd4"/>
+                <rect x="-14" y="33" width="28" height="6" rx="2" fill="#ffffff"/>
+              </g>
+            </svg>
+          </div>
+
+          <div class="authx-features">
+            <div class="authx-feature">
+              <span class="fi"><svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.9-5 4.8 1.2 6.9L12 17.6 5.9 21l1.2-6.9-5-4.8 6.9-.9L12 2z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <div><strong>Fair Play</strong><span>100% secure &amp; anti-cheat</span></div>
+            </div>
+            <div class="authx-feature">
+              <span class="fi"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <div><strong>Easy Tournaments</strong><span>Create and join scrims in seconds</span></div>
+            </div>
+            <div class="authx-feature">
+              <span class="fi"><svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <div><strong>Rank Up</strong><span>Climb leaderboards &amp; earn glory</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: form -->
+      <div class="authx-form-side">
+        <div class="authx-form-inner">
+          <div class="authx-form-logo"><img src="assets/img/logo-mark.png" alt="Infinity Scrims"></div>
+
+          <!-- ===== STEP 1: Sign-up form ===== -->
+          <div id="signupStep">
+            <h2>Create Your Account ✨</h2>
+            <p class="authx-desc">Join Infinity Scrims and start your journey</p>
+            <div id="registerError" class="authx-error"></div>
+            <form id="registerForm" novalidate>
+              <div class="authx-field">
+                <div class="authx-field-row"><label for="username">Username</label></div>
+                <div class="authx-input-wrap">
+                  <svg class="leading-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2" stroke="currentColor" fill="none"/><path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" fill="none"/></svg>
+                  <input type="text" id="username" placeholder="Choose a username" required>
+                </div>
+              </div>
+              <div class="authx-field">
+                <div class="authx-field-row"><label for="regEmail">Email Address</label></div>
+                <div class="authx-input-wrap">
+                  <svg class="leading-icon" viewBox="0 0 24 24"><path d="M3 6h18v12H3z" stroke="currentColor" stroke-linejoin="round" fill="none"/><path d="M3 6l9 7 9-7" stroke="currentColor" stroke-linejoin="round" fill="none"/></svg>
+                  <input type="email" id="regEmail" placeholder="Enter your email" required>
+                </div>
+              </div>
+              <div class="authx-field">
+                <div class="authx-field-row"><label for="regPhone">Phone <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label></div>
+                <div class="authx-input-wrap">
+                  <svg class="leading-icon" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" fill="none"/></svg>
+                  <input type="tel" id="regPhone" placeholder="03xx-xxxxxxx">
+                </div>
+              </div>
+              <div class="authx-field">
+                <div class="authx-field-row"><label for="regPassword">Password</label></div>
+                <div class="authx-input-wrap">
+                  <svg class="leading-icon" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" fill="none"/><path d="M8 10V7a4 4 0 018 0v3" stroke="currentColor" fill="none"/></svg>
+                  <input type="password" id="regPassword" placeholder="Create a password" required minlength="6">
+                  <button type="button" class="toggle-visibility" data-target="regPassword">
+                    <svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" stroke="currentColor" fill="none"/><circle cx="12" cy="12" r="3" stroke="currentColor" fill="none"/></svg>
+                  </button>
+                </div>
+                <div class="authx-field-error show" id="passwordHint" style="color:var(--text-muted);">At least 6 characters.</div>
+              </div>
+              <div class="authx-field">
+                <div class="authx-field-row"><label for="confirmPassword">Confirm Password</label></div>
+                <div class="authx-input-wrap">
+                  <svg class="leading-icon" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" fill="none"/><path d="M8 10V7a4 4 0 018 0v3" stroke="currentColor" fill="none"/></svg>
+                  <input type="password" id="confirmPassword" placeholder="Confirm your password" required>
+                  <button type="button" class="toggle-visibility" data-target="confirmPassword">
+                    <svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" stroke="currentColor" fill="none"/><circle cx="12" cy="12" r="3" stroke="currentColor" fill="none"/></svg>
+                  </button>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-block" id="registerSubmitBtn">SIGN UP</button>
+            </form>
+            <p class="authx-footer-text">Already have an account? <a href="login.html">Login</a></p>
+          </div>
+
+          <!-- ===== STEP 2: OTP verification ===== -->
+          <div id="otpStep" class="authx-otp-card">
+            <div class="authx-otp-icon">
+              <svg viewBox="0 0 24 24"><path d="M3 6h18v12H3z" stroke-linejoin="round" stroke="currentColor" fill="none"/><path d="M3 6l9 7 9-7" stroke-linejoin="round" stroke="currentColor" fill="none"/></svg>
+            </div>
+            <h2 style="text-align:center;">Check your email</h2>
+            <p class="authx-desc">We sent a 6-digit code to <span class="authx-otp-email" id="otpEmailDisplay"></span></p>
+
+            <div id="otpError" class="authx-error"></div>
+
+            <div class="authx-otp-row" id="otpInputRow">
+              <input class="authx-otp-box" type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code" data-index="0">
+              <input class="authx-otp-box" type="text" inputmode="numeric" maxlength="1" data-index="1">
+              <input class="authx-otp-box" type="text" inputmode="numeric" maxlength="1" data-index="2">
+              <input class="authx-otp-box" type="text" inputmode="numeric" maxlength="1" data-index="3">
+              <input class="authx-otp-box" type="text" inputmode="numeric" maxlength="1" data-index="4">
+              <input class="authx-otp-box" type="text" inputmode="numeric" maxlength="1" data-index="5">
+            </div>
+
+            <div class="authx-otp-meta">
+              <span class="authx-otp-timer" id="otpTimer">Code expires in 10:00</span>
+              <button type="button" class="authx-otp-resend" id="otpResendBtn" disabled>Resend code (60s)</button>
+            </div>
+            <div class="authx-otp-success" id="otpSuccessMsg"></div>
+
+            <button type="button" class="btn btn-block" id="otpVerifyBtn">VERIFY &amp; CONTINUE</button>
+
+            <button type="button" class="authx-otp-back" id="otpBackBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              Back to sign up
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="authx-copyright">© 2026 Infinity Scrims. All rights reserved.</p>
+
+  <script src="assets/js/app.js"></script>
+  <script>
+    if (Api.user()) window.location.href = 'dashboard.html';
+
+    const EYE_OFF = '<svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7c2 0 3.6.5 5 1.2M23 12s-4 7-11 7c-2 0-3.6-.5-5-1.2M3 3l18 18" stroke="currentColor" stroke-linecap="round" fill="none"/><path d="M9.9 9.9a3 3 0 104.2 4.2" stroke="currentColor" fill="none"/></svg>';
+    const EYE_ON = '<svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" stroke="currentColor" fill="none"/><circle cx="12" cy="12" r="3" stroke="currentColor" fill="none"/></svg>';
+    document.querySelectorAll('.toggle-visibility').forEach((btn) => {
+      btn.innerHTML = EYE_OFF;
+      btn.addEventListener('click', () => {
+        const input = document.getElementById(btn.dataset.target);
+        const willShow = input.type === 'password';
+        input.type = willShow ? 'text' : 'password';
+        btn.innerHTML = willShow ? EYE_ON : EYE_OFF;
+      });
+    });
+
+    const signupStep = document.getElementById('signupStep');
+    const otpStep = document.getElementById('otpStep');
+    const otpEmailDisplay = document.getElementById('otpEmailDisplay');
+    let registeredEmail = '';
+
+    function showOtpStep(email) {
+      registeredEmail = email;
+      otpEmailDisplay.textContent = email;
+      signupStep.style.display = 'none';
+      otpStep.classList.add('show');
+      startExpiryTimer();
+      startResendCooldown();
+      otpBoxes[0].focus();
+    }
+    document.getElementById('otpBackBtn').addEventListener('click', () => {
+      otpStep.classList.remove('show');
+      signupStep.style.display = 'block';
+      clearInterval(expiryInterval);
+      clearInterval(resendInterval);
+    });
+
+    // Land directly on the OTP step if redirected here from login.html
+    // (account exists but hasn't verified its email yet).
+    (function checkDeepLink() {
+      const params = new URLSearchParams(location.search);
+      if (params.get('step') === 'otp' && params.get('email')) {
+        showOtpStep(decodeURIComponent(params.get('email')));
+      }
+    })();
+
+    const regPasswordInput = document.getElementById('regPassword');
+    const passwordHint = document.getElementById('passwordHint');
+    regPasswordInput.addEventListener('input', () => {
+      const ok = regPasswordInput.value.length >= 6;
+      passwordHint.textContent = ok ? '✓ Looks good' : 'At least 6 characters.';
+      passwordHint.style.color = ok ? 'var(--success)' : 'var(--text-muted)';
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorBox = document.getElementById('registerError');
+      errorBox.classList.remove('show');
+      errorBox.innerHTML = '';
+
+      const btn = e.target.querySelector('button[type="submit"]');
+      if (btn.disabled) return;
+
+      const username = document.getElementById('username').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const phone = document.getElementById('regPhone').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (password.length < 6) {
+        errorBox.textContent = 'Password must be at least 6 characters.';
+        errorBox.classList.add('show');
+        regPasswordInput.focus();
+        return;
+      }
+      if (password !== confirmPassword) {
+        errorBox.textContent = 'Passwords do not match.';
+        errorBox.classList.add('show');
+        return;
+      }
+
+      btn.disabled = true;
+      const original = btn.innerHTML;
+      btn.innerHTML = `<span class="authx-btn-spinner"></span>Creating account…`;
+
+      try {
+        const data = await Api.post('/auth/register.php', { username, email, password, phone });
+        btn.disabled = false;
+        btn.innerHTML = original;
+        if (data.email_sent === false) {
+          toast("Account created, but the verification email didn't send — tap Resend on the next screen.", 'info');
+        }
+        showOtpStep(data.email || email);
+      } catch (err) {
+        errorBox.innerHTML = err.status === 409
+          ? `${err.message} — <a href="login.html" style="text-decoration:underline;">Login instead</a>`
+          : escapeHtml(err.message || 'Sign up failed. Try again.');
+        errorBox.classList.add('show');
+        btn.disabled = false;
+        btn.innerHTML = original;
+      }
+    });
+
+    // ---------------- OTP boxes ----------------
+    const otpBoxes = Array.from(document.querySelectorAll('.authx-otp-box'));
+    otpBoxes.forEach((box, i) => {
+      box.addEventListener('input', () => {
+        box.value = box.value.replace(/[^0-9]/g, '');
+        box.classList.toggle('filled', box.value.length > 0);
+        if (box.value && i < otpBoxes.length - 1) otpBoxes[i + 1].focus();
+      });
+      box.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !box.value && i > 0) otpBoxes[i - 1].focus();
+      });
+      box.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+        text.split('').slice(0, otpBoxes.length).forEach((char, idx) => {
+          if (otpBoxes[idx]) { otpBoxes[idx].value = char; otpBoxes[idx].classList.add('filled'); }
+        });
+        const next = otpBoxes[Math.min(text.length, otpBoxes.length - 1)];
+        if (next) next.focus();
+      });
+    });
+
+    function getOtpValue() { return otpBoxes.map((b) => b.value).join(''); }
+    function markOtpError() {
+      otpBoxes.forEach((b) => { b.classList.add('error'); setTimeout(() => b.classList.remove('error'), 300); });
+    }
+    function markOtpSuccess() {
+      return new Promise((resolve) => {
+        otpBoxes.forEach((b, i) => setTimeout(() => b.classList.add('success'), i * 60));
+        setTimeout(resolve, otpBoxes.length * 60 + 350);
+      });
+    }
+    function clearOtpBoxes() {
+      otpBoxes.forEach((b) => { b.value = ''; b.classList.remove('filled'); });
+      otpBoxes[0].focus();
+    }
+
+    let expiryInterval;
+    function startExpiryTimer() {
+      clearInterval(expiryInterval);
+      let secondsLeft = 10 * 60;
+      const timerEl = document.getElementById('otpTimer');
+      timerEl.style.color = '';
+      expiryInterval = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft <= 0) {
+          clearInterval(expiryInterval);
+          timerEl.textContent = 'Code expired — please resend';
+          timerEl.style.color = 'var(--danger)';
+          return;
+        }
+        const m = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+        const s = String(secondsLeft % 60).padStart(2, '0');
+        timerEl.textContent = `Code expires in ${m}:${s}`;
+      }, 1000);
+    }
+
+    let resendInterval;
+    function startResendCooldown() {
+      clearInterval(resendInterval);
+      let secondsLeft = 60;
+      const btn = document.getElementById('otpResendBtn');
+      btn.disabled = true;
+      btn.textContent = `Resend code (${secondsLeft}s)`;
+      resendInterval = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft <= 0) {
+          clearInterval(resendInterval);
+          btn.disabled = false;
+          btn.textContent = 'Resend code';
+          return;
+        }
+        btn.textContent = `Resend code (${secondsLeft}s)`;
+      }, 1000);
+    }
+
+    document.getElementById('otpResendBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('otpResendBtn');
+      const errorBox = document.getElementById('otpError');
+      const successBox = document.getElementById('otpSuccessMsg');
+      errorBox.classList.remove('show');
+      successBox.classList.remove('show');
+      btn.disabled = true;
+
+      try {
+        const data = await Api.post('/auth/resend-verification.php', { email: registeredEmail });
+        clearOtpBoxes();
+        successBox.textContent = data.email_sent === false ? 'Code refreshed, but the email failed to send — try again shortly.' : 'A new code has been sent.';
+        successBox.classList.add('show');
+        startExpiryTimer();
+        startResendCooldown();
+      } catch (err) {
+        errorBox.textContent = err.message || 'Could not resend code.';
+        errorBox.classList.add('show');
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById('otpVerifyBtn').addEventListener('click', async () => {
+      const errorBox = document.getElementById('otpError');
+      errorBox.classList.remove('show');
+      document.getElementById('otpSuccessMsg').classList.remove('show');
+
+      const otp = getOtpValue();
+      if (otp.length !== 6) {
+        errorBox.textContent = 'Please enter the full 6-digit code.';
+        errorBox.classList.add('show');
+        markOtpError();
+        return;
+      }
+
+      const btn = document.getElementById('otpVerifyBtn');
+      const original = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<span class="authx-btn-spinner"></span>Verifying…`;
+
+      try {
+        const data = await Api.post('/auth/verify-email.php', { email: registeredEmail, otp });
+        Api.setSession(data);
+        btn.innerHTML = `<span class="authx-btn-spinner"></span>Verified!`;
+        clearInterval(expiryInterval);
+        clearInterval(resendInterval);
+        await markOtpSuccess();
+        window.location.href = 'dashboard.html';
+      } catch (err) {
+        errorBox.textContent = err.message || 'Invalid code. Try again.';
+        errorBox.classList.add('show');
+        markOtpError();
+        btn.disabled = false;
+        btn.innerHTML = original;
+      }
+    });
+  </script>
+</body>
+</html>

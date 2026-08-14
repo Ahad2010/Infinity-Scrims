@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payments — Infinity Scrims</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.webp">
+  <script src="assets/js/chart.min.js"></script>
+</head>
+<body data-page="payments">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content">
+        <div class="breadcrumb"><a href="dashboard.html">Dashboard</a> &gt; <span class="current">Payments</span></div>
+        <h1 class="page-title">Payments</h1>
+        <p class="page-sub">View your payment history and transaction details.</p>
+
+        <div class="stat-grid" id="payStatGrid"></div>
+
+<div class="grid-cards-2" style="margin:20px 0;">
+          <div class="card" style="padding:20px;">
+            <p style="font-size:14px; font-weight:700; margin-bottom:14px;">Profit Breakdown</p>
+            <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+              <div style="width:140px; height:140px; flex-shrink:0;"><canvas id="profitDonut"></canvas></div>
+              <div id="profitLegend" style="display:flex; flex-direction:column; gap:8px; flex:1; min-width:160px;"></div>
+            </div>
+          </div>
+          <div class="card" style="padding:20px;">
+            <p style="font-size:14px; font-weight:700; margin-bottom:14px;">Loss Breakdown</p>
+            <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+              <div style="width:140px; height:140px; flex-shrink:0;"><canvas id="lossDonut"></canvas></div>
+              <div id="lossLegend" style="display:flex; flex-direction:column; gap:8px; flex:1; min-width:160px;"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:18px;">
+          <div style="display:flex; gap:8px; flex-wrap:wrap;" id="payTabs">
+            <button class="btn btn-sm" data-status="">All</button>
+            <button class="btn btn-outline btn-sm" data-status="approved">Successful</button>
+            <button class="btn btn-outline btn-sm" data-status="pending">Pending</button>
+            <button class="btn btn-outline btn-sm" data-status="rejected">Rejected</button>
+          </div>
+        </div>
+
+        <div class="table-wrap card" style="padding:0;">
+          <table>
+<thead><tr><th>Transaction</th><th>Scrim / Booking</th><th>Amount</th><th>Winning</th><th>Net</th><th>Status</th><th>Payment Method</th><th>Date &amp; Time</th><th>Action</th></tr></thead>
+            <tbody id="payBody"></tbody>
+          </table>
+        </div>
+
+        <div class="grid-cards" style="grid-template-columns: repeat(3, 1fr); margin-top:20px;">
+          <div class="card">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--success)" stroke-width="2" style="margin-bottom:8px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <div style="font-weight:700; font-size:14px; margin-bottom:4px;">Secure Payments</div>
+            <div style="font-size:12px; color:var(--text-muted);">Your payments are 100% secure with industry standard encryption.</div>
+          </div>
+          <div class="card">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--info)" stroke-width="2" style="margin-bottom:8px;"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+            <div style="font-weight:700; font-size:14px; margin-bottom:4px;">Need Help?</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Facing any payment issue? Ask our support assistant.</div>
+            <button class="btn btn-outline btn-sm btn-block" onclick="window.SupportWidget && window.SupportWidget.open()">Contact Support</button>
+          </div>
+          <div class="card">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--purple)" stroke-width="2" style="margin-bottom:8px;"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+            <div style="font-weight:700; font-size:14px; margin-bottom:4px;">Payment Methods</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">We support JazzCash, Easypaisa and bank transfer.</div>
+            <div style="display:flex; gap:10px; font-weight:700; font-size:13px;"><span style="color:#e5872a;">🟠 JazzCash</span><span style="color:#00a651;">💚 Easypaisa</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+
+  <div id="support-widget-mount"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/demo-seed.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/support-widget.js"></script>
+  <script src="assets/js/charts.js"></script>
+  <script>
+    /**
+     * Real endpoint: GET /payments/my.php?status=pending|approved|rejected
+     * -> { payments: [...], stats: { total_spent_txt, successful_txt, pending_txt,
+     *      rejected_txt, total_count, successful_count, pending_count, rejected_count } }
+     */
+    const statusCls  = { pending: 'badge-warning', approved: 'badge-success', rejected: 'badge-danger' };
+    const statusIcon = { pending: '⏳', approved: '✓', rejected: '✕' };
+    const statusText = { pending: 'Pending', approved: 'Successful', rejected: 'Rejected' };
+
+    async function loadPayments(status = '') {
+      document.getElementById('payBody').innerHTML = `<tr><td colspan="9"><div class="skeleton" style="height:20px;"></div></td></tr>`.repeat(3);
+      try {
+        const data = await Api.get('/payments/my.php' + (status ? '?status=' + status : ''));
+        paintStats(data.stats);
+        paintRows(data.payments || []);
+        paintDonuts(data.stats, data.payments || []);
+      } catch (err) {
+        document.getElementById('payBody').innerHTML = `<tr><td colspan="9"><div class="empty-state">${escapeHtml(err.message || 'Could not load payments.')}</div></td></tr>`;
+      }
+    }
+
+function paintStats(s) {
+      const netTotal = (Number(s.profit) || 0) - (Number(s.loss) || 0);
+      document.getElementById('payStatGrid').innerHTML = `
+        <div class="card stat-card"><div class="icon icon-dark">${ICONS.wallet}</div><div class="label">Total Spent</div><div class="value">${s.total_spent_txt}</div><div class="sub">All time payments</div></div>
+        <div class="card stat-card"><div class="icon" style="background:var(--success-bg); color:var(--success);">${ICONS.check}</div><div class="label">Successful</div><div class="value">${s.successful_txt}</div><div class="sub">${s.successful_count} payment${s.successful_count == 1 ? '' : 's'}</div></div>
+        <div class="card stat-card"><div class="icon" style="background:var(--danger-bg); color:var(--danger);"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></div><div class="label">Loss</div><div class="value">${s.loss_txt}</div><div class="sub">Spent minus winnings</div></div>
+        <div class="card stat-card"><div class="icon" style="background:var(--success-bg); color:var(--success);"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div><div class="label">Profit</div><div class="value">${s.profit_txt}</div><div class="sub">Winnings minus spend</div></div>
+      `;
+    }
+
+let profitChart, lossChart;
+    const donutPalette = ['#22c55e', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#14b8a6'];
+
+    function paintDonuts(stats, rows) {
+      // Profit donut — per scrim, only rows with a positive net (decided results)
+      const profitByScrim = {};
+      rows.forEach(p => { if (p.net > 0) profitByScrim[p.scrim_title] = (profitByScrim[p.scrim_title] || 0) + p.net; });
+      renderBreakdownDonut('profitDonut', 'profitLegend', profitChart, profitByScrim, donutPalette, 'No profit yet.');
+      profitChart = window.__lastDonut;
+
+      // Loss donut — per scrim, only rows with a negative net (decided results)
+      const lossByScrim = {};
+      rows.forEach(p => { if (p.net < 0) lossByScrim[p.scrim_title] = (lossByScrim[p.scrim_title] || 0) + Math.abs(p.net); });
+      renderBreakdownDonut('lossDonut', 'lossLegend', lossChart, lossByScrim, ['#ef4444', '#f97316', '#eab308', '#a855f7', '#0ea5e9'], 'No loss yet.');
+      lossChart = window.__lastDonut;
+    }
+
+    function renderBreakdownDonut(canvasId, legendId, existingChart, dataObj, palette, emptyMsg) {
+      const labels = Object.keys(dataObj);
+      const values = Object.values(dataObj);
+      const total = values.reduce((a, b) => a + b, 0) || 1;
+      if (existingChart) existingChart.destroy();
+      if (!labels.length) {
+        document.getElementById(legendId).innerHTML = `<span style="font-size:12.5px; color:var(--text-muted);">${emptyMsg}</span>`;
+        document.getElementById(canvasId).getContext('2d').clearRect(0, 0, 140, 140);
+        window.__lastDonut = null;
+        return;
+      }
+      window.__lastDonut = makeDonutChart(canvasId, labels, values, palette);
+      document.getElementById(legendId).innerHTML = labels.map((l, i) => `
+        <span style="display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text-muted);"><span style="width:8px;height:8px;border-radius:50%;background:${palette[i % palette.length]};display:inline-block;"></span>${escapeHtml(l)} — ${money(values[i])} (${Math.round(values[i] / total * 100)}%)</span>
+      `).join('');
+    }
+
+    function paintRows(rows) {
+      const body = document.getElementById('payBody');
+      if (!rows.length) {
+        body.innerHTML = `<tr><td colspan="9"><div class="empty-state">No payments in this category yet.</div></td></tr>`;
+        return;
+      }
+      body.innerHTML = rows.map(p => {
+        const when = new Date(p.created_at.replace(' ', 'T')).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+          + ', ' + new Date(p.created_at.replace(' ', 'T')).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        return `
+        <tr>
+          <td>#${p.id} <span style="font-size:10px; color:var(--text-muted);">${p.txn_id ? escapeHtml(p.txn_id) : ''}</span></td>
+          <td style="display:flex; align-items:center; gap:10px;">
+            <div><div style="font-weight:600;">${escapeHtml(p.scrim_title)}</div><div style="font-size:11px; color:var(--text-muted);">Slot #${p.slot_number} · ${escapeHtml(p.team_name)}</div></div>
+          </td>
+<td><b>${p.amount_txt}</b></td>
+          <td>${p.prize_won > 0 ? `<b style="color:var(--success);">${p.prize_won_txt}</b>` : '—'}</td>
+          <td>${p.net === null ? '—' : `<b style="color:${p.net >= 0 ? 'var(--success)' : 'var(--danger)'};">${p.net_txt}</b>`}</td>
+          <td><span class="badge ${statusCls[p.status]}">${statusIcon[p.status]} ${statusText[p.status]}</span>${p.reject_reason ? `<br><span style="font-size:10px; color:var(--text-muted);">${escapeHtml(p.reject_reason)}</span>` : ''}</td>
+          <td>${escapeHtml(p.method)}<br><span style="font-size:10px; color:var(--text-muted);">${escapeHtml(p.sender_number)}</span></td>
+          <td>${when}</td>
+          <td>${p.screenshot_url ? `<a href="${p.screenshot_url}" target="_blank" class="btn btn-outline btn-sm">View Proof</a>` : '-'}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    document.querySelectorAll('#payTabs button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#payTabs button').forEach(b => b.className = 'btn btn-outline btn-sm');
+        btn.className = 'btn btn-sm';
+        loadPayments(btn.dataset.status);
+      });
+    });
+
+    loadPayments();
+  </script>
+</body>
+</html>

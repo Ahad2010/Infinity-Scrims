@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join Team — Infinity Scrims</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.webp">
+</head>
+<body data-page="my-teams">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content">
+        <div class="breadcrumb"><a href="dashboard.html">Dashboard</a> &gt; <a href="my-teams.html">My Teams</a> &gt; <span class="current">Join Team</span></div>
+        <h1 class="page-title">Join a Team</h1>
+        <p class="page-sub">Enter the join code your captain shared with you.</p>
+
+        <div class="card" style="max-width:480px;">
+          <div class="form-section" style="margin-bottom:8px;">
+            <div class="field"><label>Join Code</label><input type="text" id="jtCode" placeholder="e.g. A1B2C3D4" style="text-transform:uppercase;"></div>
+          </div>
+          <p id="jtMsg" class="text-danger" style="font-size:12px; display:none; margin-bottom:12px;"></p>
+          <div style="display:flex; gap:10px;">
+            <a href="my-teams.html" class="btn btn-outline">Cancel</a>
+            <button class="btn" id="jtSubmitBtn" onclick="submitJoinTeam()">Join Team</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+  <div id="support-widget-mount"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/support-widget.js"></script>
+  <script>
+    async function submitJoinTeam() {
+      const code = document.getElementById('jtCode').value.trim();
+      const msg = document.getElementById('jtMsg');
+      msg.style.display = 'none';
+      if (!code) {
+        msg.textContent = 'Enter a join code.';
+        msg.style.display = 'block';
+        return;
+      }
+      const btn = document.getElementById('jtSubmitBtn');
+      btn.disabled = true; btn.textContent = 'Joining...';
+      try {
+        await Api.post('/teams/join.php', { join_code: code });
+        window.location.href = 'my-teams.html?joined=1';
+      } catch (err) {
+        msg.textContent = err.message || 'Could not join team.';
+        msg.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'Join Team';
+      }
+    }
+  </script>
+</body>
+</html>

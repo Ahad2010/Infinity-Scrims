@@ -1,0 +1,15 @@
+Options -Indexes
+DirectoryIndex index.php
+
+# JWT auth needs the Authorization header — Apache/mod_php strips it by
+# default unless explicitly passed through. Two mechanisms, for different
+# Apache/PHP-handler setups (one or the other will apply, both are harmless).
+RewriteEngine On
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+CGIPassAuth On
+
+# Sensitive files block
+<FilesMatch "^(\.env|composer\.(json|lock)|.*\.sql|.*\.md)$">
+    Require all denied
+</FilesMatch>

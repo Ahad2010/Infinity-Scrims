@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment — Infinity Scrims</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.webp">
+  <style>
+    .qr-box { width: 100px; height: 100px; border-radius: 8px; border: 1px solid var(--border); background: repeating-linear-gradient(45deg, #111 0 4px, #fff 4px 8px), repeating-linear-gradient(-45deg, #111 0 4px, transparent 4px 8px); background-blend-mode: multiply; flex-shrink: 0; }
+  </style>
+</head>
+<body data-page="my-bookings">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content">
+        <div class="breadcrumb"><a href="dashboard.html">Dashboard</a> &gt; <a href="my-bookings.html">My Bookings</a> &gt; <span class="current">Payment</span></div>
+        <h1 class="page-title">Payment</h1>
+        <p class="page-sub">Complete your payment to confirm your slot booking.</p>
+
+        <div id="loadingState" class="card"><div class="skeleton" style="height:200px;"></div></div>
+
+        <div id="paymentContent" style="display:none;">
+          <div class="grid-2" style="align-items:start;">
+            <div>
+              <div class="countdown-box" id="countdownBox">
+                <div style="display:flex; align-items:center; gap:10px; font-size:13px;">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  <div><b>Complete your payment soon</b><br><span style="color:var(--text-muted);">Slots are held temporarily — submit your proof before it's released back.</span></div>
+                </div>
+              </div>
+
+              <div class="card" style="margin-bottom:20px;">
+                <div style="font-weight:700; margin-bottom:2px;">1. Payment Method</div>
+                <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Choose your preferred payment method</p>
+                <div class="radio-grid" id="methodRadioGrid"></div>
+              </div>
+
+              <div class="card" style="margin-bottom:20px;">
+                <div style="font-weight:700; margin-bottom:2px;">2. Payment Details</div>
+                <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Send payment to the following account</p>
+                <div id="methodDetails"></div>
+
+                <div class="card" style="background:var(--info-bg); border:none; margin-top:16px; padding:14px;">
+                  <div style="display:flex; gap:8px; font-size:12px; color:var(--info); font-weight:700; margin-bottom:6px;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    Important Instructions
+                  </div>
+                  <ul style="font-size:12px; color:var(--text-muted); padding-left:16px; line-height:1.9;">
+                    <li>Send the exact total amount to the account above.</li>
+                    <li>After paying, enter the sender number and transaction ID.</li>
+                    <li>Upload a clear, uncropped payment screenshot.</li>
+                    <li>Your booking stays pending until admin verification.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="card">
+                <div style="font-weight:700; margin-bottom:2px;">3. Payment Proof</div>
+                <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Sender number, transaction ID and screenshot</p>
+
+                <div class="form-row">
+                  <div class="field"><label>Sender Number <span class="req">*</span></label><input type="tel" id="senderNumber" placeholder="03xx-xxxxxxx"></div>
+                  <div class="field"><label>Transaction ID <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label><input type="text" id="txnId" placeholder="e.g. 1234567890"></div>
+                </div>
+
+                <div style="display:flex; gap:14px; align-items:stretch; margin-bottom:16px; flex-wrap:wrap;">
+                  <div class="dropzone" id="dropzone" style="flex:1; min-width:200px;">
+                    <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" style="display:none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <div style="font-weight:700; font-size:13px;">Click to upload or drag and drop</div>
+                    <div class="hint">PNG, JPG or WEBP (Max. 5MB)</div>
+                  </div>
+                  <div id="filePreview" style="display:none; align-items:center; gap:10px; border:1px solid var(--border); border-radius:var(--radius); padding:12px; min-width:200px;">
+                    <div style="width:44px; height:44px; border-radius:8px; background:var(--surface-alt); display:flex; align-items:center; justify-content:center;">🖼️</div>
+                    <div style="flex:1;">
+                      <div style="font-weight:600; font-size:12px;" id="fileName">Screenshot.jpg</div>
+                      <div style="font-size:11px; color:var(--text-muted);" id="fileSize">236 KB</div>
+                    </div>
+                    <span style="color:var(--success);">✓</span>
+                  </div>
+                </div>
+                <button class="btn btn-block" id="confirmPayBtn">I Have Paid &amp; Uploaded Screenshot</button>
+              </div>
+            </div>
+
+            <div>
+              <div class="card" style="margin-bottom:16px;">
+                <div class="card-title">Booking Summary</div>
+                <div style="display:flex; gap:10px; margin-bottom:14px;">
+                  <img id="sumBanner" src="https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=100&h=100&fit=crop" style="width:60px;height:60px;border-radius:8px;object-fit:cover;">
+                  <div>
+                    <div style="font-weight:700; font-size:13px;" id="sumTitle">—</div>
+                    <div style="font-size:11px; color:var(--text-muted);" id="sumModeMap"></div>
+                    <div style="font-size:11px; color:var(--text-muted);" id="sumDate"></div>
+                  </div>
+                </div>
+                <div style="font-weight:700; font-size:13px; margin-bottom:6px;">Your Booking</div>
+                <div class="dl-row"><span class="k">Slot Number</span><span class="badge badge-warning" id="sumSlot">#-</span></div>
+                <div class="dl-row" style="border-top:1px solid var(--border); padding-top:12px; margin-top:4px;"><span class="k" style="font-weight:700; color:var(--text);">Total Amount</span><span class="v" style="font-size:16px;" id="sumAmount">—</span></div>
+              </div>
+
+              <div class="card" style="background:var(--warning-bg); border:none; margin-bottom:16px;">
+                <div style="font-weight:700; color:var(--warning); font-size:13px; margin-bottom:2px;">⏳ Booking Status</div>
+                <div style="font-weight:800; color:var(--warning); font-size:15px; margin-bottom:2px;">Pending Payment</div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">Your booking will be confirmed after payment verification by admin.</div>
+              </div>
+
+              <div class="card">
+                <div style="font-weight:700; font-size:13px; margin-bottom:4px;">Need Help?</div>
+                <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Facing any issues with payment? Ask our support assistant.</p>
+                <button class="btn btn-outline btn-block btn-sm" onclick="window.SupportWidget && window.SupportWidget.open()">Contact Support</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Success state, shown after submit -->
+        <div id="successState" style="display:none;">
+          <div class="card" style="max-width:480px; margin:0 auto; text-align:center; padding:32px 24px;">
+            <div style="width:78px; height:78px; border-radius:50%; background:var(--success-bg); color:var(--success); display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+              <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 2"/></svg>
+            </div>
+            <div style="font-size:19px; font-weight:800; margin-bottom:6px;">Payment Submitted</div>
+            <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:20px;">Your payment proof has been sent for verification. You'll be notified once it's approved — usually within 15 minutes.</p>
+            <a href="my-bookings.html" class="btn btn-block">Track in My Bookings</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+
+  <div id="support-widget-mount"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/demo-seed.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/support-widget.js"></script>
+  <script>
+    const bookingId = new URLSearchParams(location.search).get('booking_id');
+    let currentBooking = null;
+    let payoutAccounts = [];
+    let selectedMethod = null;
+
+    if (!bookingId) {
+      document.getElementById('loadingState').innerHTML = `<div class="empty-state">No booking selected. Go to <a href="my-bookings.html">My Bookings</a> to complete a pending payment.</div>`;
+    } else {
+      init();
+    }
+
+    async function init() {
+      try {
+        // No single-booking GET endpoint yet — find it in the user's own bookings list.
+        const data = await Api.get('/bookings/my.php?filter=pending');
+        currentBooking = (data.bookings || []).find(b => String(b.id) === String(bookingId));
+        if (!currentBooking) {
+          document.getElementById('loadingState').innerHTML = `<div class="empty-state">This booking wasn't found, or is no longer pending payment.</div>`;
+          return;
+        }
+
+        const detail = await Api.get('/scrims/detail.php?id=' + currentBooking.scrim_id);
+        payoutAccounts = detail.payout_accounts || [];
+
+        paintSummary();
+        paintMethods();
+
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('paymentContent').style.display = 'block';
+      } catch (err) {
+        document.getElementById('loadingState').innerHTML = `<div class="empty-state">${escapeHtml(err.message || 'Could not load this booking.')}</div>`;
+      }
+    }
+
+    function paintSummary() {
+      const b = currentBooking;
+      if (b.banner) document.getElementById('sumBanner').src = b.banner;
+      document.getElementById('sumTitle').textContent = b.title;
+      document.getElementById('sumModeMap').textContent = [b.mode, b.map].filter(Boolean).join(' • ');
+      const dt = new Date(b.match_at.replace(' ', 'T'));
+      document.getElementById('sumDate').textContent = dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ' + dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      document.getElementById('sumSlot').textContent = '#' + b.slot_number;
+      document.getElementById('sumAmount').textContent = b.amount_txt;
+    }
+
+    const methodLabels = { jazzcash: '🟠 JazzCash', easypaisa: '💚 Easypaisa', bank: '🏦 Bank Transfer' };
+
+    function paintMethods() {
+      if (!payoutAccounts.length) {
+        document.getElementById('methodRadioGrid').innerHTML = `<div class="empty-state">No payment accounts configured yet — contact the admin.</div>`;
+        return;
+      }
+      document.getElementById('methodRadioGrid').innerHTML = payoutAccounts.map((acc, i) => `
+        <label class="radio-card${i === 0 ? ' selected' : ''}" data-method="${acc.method}">
+          <span class="radio-left"><input type="radio" name="paymethod" ${i === 0 ? 'checked' : ''}> ${methodLabels[acc.method] || acc.method}</span>
+        </label>
+      `).join('');
+      document.querySelectorAll('#methodRadioGrid .radio-card').forEach(card => {
+        card.addEventListener('click', () => selectMethod(card.dataset.method));
+      });
+      selectMethod(payoutAccounts[0].method);
+    }
+
+    function selectMethod(method) {
+      selectedMethod = method;
+      document.querySelectorAll('#methodRadioGrid .radio-card').forEach(card => {
+        const isSel = card.dataset.method === method;
+        card.classList.toggle('selected', isSel);
+        card.querySelector('input').checked = isSel;
+      });
+      const acc = payoutAccounts.find(a => a.method === method);
+      if (!acc) return;
+      document.getElementById('methodDetails').innerHTML = `
+        <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">${methodLabels[method] || method} Number</div>
+        <div class="copy-field" style="margin-bottom:14px;">
+          <b style="font-size:15px;" id="methodNumber">${escapeHtml(acc.account_number)}</b>
+          <button id="copyBtn"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">Account Title</div>
+        <b style="font-size:14px;">${escapeHtml(acc.account_title)}</b>
+      `;
+      document.getElementById('copyBtn').addEventListener('click', () => {
+        navigator.clipboard?.writeText(acc.account_number);
+        toast('Number copied to clipboard', 'success');
+      });
+    }
+
+    // File upload
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    dropzone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      const f = fileInput.files[0];
+      if (!f) return;
+      if (f.size > 5 * 1024 * 1024) { toast('Screenshot must be 5MB or smaller.', 'error'); fileInput.value = ''; return; }
+      document.getElementById('fileName').textContent = f.name;
+      document.getElementById('fileSize').textContent = Math.round(f.size / 1024) + ' KB';
+      dropzone.style.display = 'none';
+      document.getElementById('filePreview').style.display = 'flex';
+    });
+
+    document.getElementById('confirmPayBtn').addEventListener('click', async () => {
+      const senderNumber = document.getElementById('senderNumber').value.trim();
+      const screenshotFile = fileInput.files[0];
+
+      if (!selectedMethod) { toast('Choose a payment method.', 'error'); return; }
+      if (!senderNumber) { toast('Enter the number you paid from.', 'error'); return; }
+      if (!screenshotFile) { toast('Please upload your payment screenshot.', 'error'); return; }
+
+      const btn = document.getElementById('confirmPayBtn');
+      const original = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Submitting...';
+      try {
+        const fd = new FormData();
+        fd.append('booking_id', bookingId);
+        fd.append('method', selectedMethod);
+        fd.append('sender_number', senderNumber);
+        const txnId = document.getElementById('txnId').value.trim();
+        if (txnId) fd.append('txn_id', txnId);
+        fd.append('screenshot', screenshotFile);
+
+        await Api.postForm('/payments/submit.php', fd);
+
+        document.getElementById('paymentContent').style.display = 'none';
+        document.getElementById('successState').style.display = 'block';
+      } catch (err) {
+        toast(err.message || 'Could not submit payment.', 'error');
+        btn.disabled = false; btn.textContent = original;
+      }
+    });
+  </script>
+</body>
+</html>

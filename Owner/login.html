@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Owner Login — Infinity Scrims</title>
+ <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <style>
+    /* Single centered card variant of the authx design — simple, owner-only login */
+    .owner-authx-shell { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); padding: 20px; position: relative; z-index: 1; }
+    .owner-authx-card { position: relative; width: 100%; max-width: 400px; background: var(--surface); border-radius: var(--radius); overflow: hidden; }
+    .owner-authx-card::before {
+      content: ""; position: absolute; inset: 0; padding: 1.5px; border-radius: inherit;
+      background: conic-gradient(from var(--border-angle), transparent 0%, transparent 70%, var(--info) 82%, var(--accent) 92%, transparent 100%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      animation: authx-border-spin 5s linear infinite; pointer-events: none; z-index: 2;
+    }
+    .owner-authx-inner { position: relative; z-index: 1; padding: 40px 36px; }
+    .owner-authx-logo { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 22px; }
+    .owner-authx-logo img { height: 34px; width: auto; }
+    .owner-authx-logo span { font-weight: 800; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+    .owner-authx-badge {
+      display: block; margin: 0 auto 18px; width: fit-content; background: var(--surface-alt); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+      padding: 4px 12px; border-radius: 999px;
+    }
+    .owner-authx-inner h2 { font-size: 24px; font-weight: 700; text-align: center; margin: 0 0 4px; }
+    .owner-authx-desc { text-align: center; color: var(--text-muted); font-size: 13px; margin: 0 0 26px; }
+  </style>
+</head>
+<body>
+  <div class="owner-authx-shell">
+    <div class="owner-authx-card">
+      <div class="owner-authx-inner">
+        <div class="owner-authx-logo">
+          <img src="assets/img/logo-mark.png" alt="Infinity Scrims">
+          <span>Infinity Scrims</span>
+        </div>
+        <span class="owner-authx-badge">Owner Panel</span>
+        <h2>Welcome Back</h2>
+        <p class="owner-authx-desc">Sign in to manage your scrims, approvals and earnings</p>
+
+        <div id="loginError" class="authx-error"></div>
+
+        <form id="loginForm">
+          <div class="authx-field">
+            <div class="authx-field-row"><label for="identity">Email</label></div>
+            <div class="authx-input-wrap">
+              <svg class="leading-icon" viewBox="0 0 24 24"><path d="M3 6h18v12H3z" stroke="currentColor" stroke-linejoin="round" fill="none"/><path d="M3 6l9 7 9-7" stroke="currentColor" stroke-linejoin="round" fill="none"/></svg>
+              <input type="email" id="identity" placeholder="Enter owner email" autocomplete="username" required>
+            </div>
+          </div>
+          <div class="authx-field">
+            <div class="authx-field-row"><label for="password">Password</label></div>
+            <div class="authx-input-wrap">
+              <svg class="leading-icon" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" fill="none"/><path d="M8 10V7a4 4 0 018 0v3" stroke="currentColor" fill="none"/></svg>
+              <input type="password" id="password" placeholder="Enter password" autocomplete="current-password" required>
+              <button type="button" class="toggle-visibility" data-target="password">
+                <svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" stroke="currentColor" fill="none"/><circle cx="12" cy="12" r="3" stroke="currentColor" fill="none"/></svg>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-block" id="loginSubmitBtn">LOGIN</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <p class="authx-copyright">© 2026 Infinity Scrims. All rights reserved.</p>
+
+  <script src="assets/js/app.js"></script>
+  <script>
+    // Already logged in as owner? Skip straight to the dashboard.
+    const existing = Api.user();
+    if (existing && existing.role === 'owner') window.location.href = 'dashboard.html';
+
+    const EYE_OFF = '<svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7c2 0 3.6.5 5 1.2M23 12s-4 7-11 7c-2 0-3.6-.5-5-1.2M3 3l18 18" stroke="currentColor" stroke-linecap="round" fill="none"/><path d="M9.9 9.9a3 3 0 104.2 4.2" stroke="currentColor" fill="none"/></svg>';
+    const EYE_ON = '<svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" stroke="currentColor" fill="none"/><circle cx="12" cy="12" r="3" stroke="currentColor" fill="none"/></svg>';
+    document.querySelectorAll('.toggle-visibility').forEach((btn) => {
+      btn.innerHTML = EYE_OFF;
+      btn.addEventListener('click', () => {
+        const input = document.getElementById(btn.dataset.target);
+        const willShow = input.type === 'password';
+        input.type = willShow ? 'text' : 'password';
+        btn.innerHTML = willShow ? EYE_ON : EYE_OFF;
+      });
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorBox = document.getElementById('loginError');
+      errorBox.classList.remove('show');
+
+      const btn = document.getElementById('loginSubmitBtn');
+      if (btn.disabled) return;
+      const identity = document.getElementById('identity').value.trim();
+      const password = document.getElementById('password').value;
+
+      btn.disabled = true;
+      const original = btn.innerHTML;
+      btn.innerHTML = `<span class="authx-btn-spinner"></span>Logging in…`;
+
+      try {
+        // Real call to the backend — this is what actually establishes the
+        // PHP session. The old version never did this, so every page after
+        // login was calling protected endpoints with no session at all.
+        const data = await Api.post('/auth/login.php', { identity, password });
+
+        if (data.user.role !== 'owner') {
+          await Api.get('/auth/logout.php').catch(() => {});
+          Api.clearSession();
+          errorBox.textContent = 'This account is not an Owner account.';
+          errorBox.classList.add('show');
+          btn.disabled = false;
+          btn.innerHTML = original;
+          return;
+        }
+
+        toast('Welcome back, ' + data.user.username + '!', 'success');
+        setTimeout(() => window.location.href = 'dashboard.html', 350);
+      } catch (err) {
+        errorBox.textContent = err.message || 'Incorrect email or password.';
+        errorBox.classList.add('show');
+        btn.disabled = false;
+        btn.innerHTML = original;
+      }
+    });
+  </script>
+</body>
+</html>

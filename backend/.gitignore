@@ -1,0 +1,7 @@
+.env
+uploads/*
+!uploads/.htaccess
+!uploads/payments/.gitkeep
+!uploads/results/.gitkeep
+!uploads/avatars/.gitkeep
+!uploads/banners/.gitkeep

@@ -1,0 +1,7 @@
+# Uploads folder — sirf images serve hon, PHP kabhi execute na ho
+<FilesMatch "\.(php|phtml|php3|php4|php5|phar|cgi|pl|py|sh)$">
+    Require all denied
+</FilesMatch>
+<FilesMatch "\.(jpg|jpeg|png|webp|gif)$">
+    Require all granted
+</FilesMatch>

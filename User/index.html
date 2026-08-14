@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head><meta charset="UTF-8"><title>Infinity Scrims</title></head>
+<body>
+<script>
+  const user = JSON.parse(localStorage.getItem('is_user') || 'null');
+  window.location.href = user ? 'dashboard.html' : 'login.html';
+</script>
+</body>
+</html>

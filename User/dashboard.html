@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Infinity Scrims</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.webp">
+</head>
+<body data-page="dashboard">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content" id="content" data-skeleton="off">
+        <h1 class="page-title" id="welcomeTitle">Welcome back! 👋</h1>
+        <p class="page-sub">Here's what's happening with your scrims today.</p>
+
+        <div class="stat-grid stat-grid-5" id="statGrid">
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card dash-panel-card">
+            <div class="card-title">Latest Scrims</div>
+            <div class="dash-panel-viewport" id="latestScrimViewport">
+              <div id="latestScrimCard">
+                <div class="skeleton skeleton-card"></div>
+              </div>
+            </div>
+          </div>
+          <div class="card dash-panel-card">
+            <div class="card-title">
+              Leaderboard
+              <div class="lb-period" style="position:relative;">
+                <button type="button" class="chip-select dropdown-trigger" data-target="lbPeriodDropdown">
+                  <span id="lbPeriodLabel">Weekly</span>
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div class="dropdown" id="lbPeriodDropdown" style="right:0; min-width:130px;">
+                  <button type="button" class="lb-period-option" data-period="weekly">Weekly</button>
+                  <button type="button" class="lb-period-option" data-period="today">Today</button>
+                  <button type="button" class="lb-period-option" data-period="alltime">All Time</button>
+                </div>
+              </div>
+            </div>
+            <div class="dash-panel-viewport leaderboard-viewport" id="leaderboardViewport">
+              <div id="leaderboardList">
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line"></div>
+              </div>
+            </div>
+            <a href="leaderboard.html" class="lb-view-all">
+              View Full Leaderboard
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="support-widget-mount"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/demo-seed.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/support-widget.js"></script>
+  <script>
+  // Top-10 leaderboard — demo data for now, one set per period filter. Once the
+  // backend is live, fetch `/leaderboard.php?period=weekly|today|alltime` instead.
+  const DEMO_LEADERBOARD_WEEKLY = [
+    { rank: 1,  name: 'XR Slayer',    points: 1250, delta: 12  },
+    { rank: 2,  name: 'NovaX',        points: 1120, delta: -2  },
+    { rank: 3,  name: 'ShadowOG',     points: 980,  delta: 5   },
+    { rank: 4,  name: 'Venom PlayZ',  points: 870,  delta: -1  },
+    { rank: 5,  name: 'BlazeOP',      points: 800,  delta: 8   },
+    { rank: 6,  name: 'Ahad Plays',   points: 740,  delta: 3   },
+    { rank: 7,  name: 'FrostByte',    points: 690,  delta: -4  },
+    { rank: 8,  name: 'RajaHunter',   points: 655,  delta: 1   },
+    { rank: 9,  name: 'GhostRecon',   points: 610,  delta: 0   },
+    { rank: 10, name: 'ViperX',       points: 585,  delta: -3  },
+  ];
+  const DEMO_LEADERBOARD_TODAY = [
+    { rank: 1,  name: 'ShadowOG',     points: 210, delta: 6   },
+    { rank: 2,  name: 'XR Slayer',    points: 180, delta: -1  },
+    { rank: 3,  name: 'Ahad Plays',   points: 160, delta: 4   },
+    { rank: 4,  name: 'BlazeOP',      points: 140, delta: 2   },
+    { rank: 5,  name: 'NovaX',        points: 120, delta: -3  },
+    { rank: 6,  name: 'FrostByte',    points: 95,  delta: 1   },
+    { rank: 7,  name: 'Venom PlayZ',  points: 80,  delta: 0   },
+    { rank: 8,  name: 'ViperX',       points: 60,  delta: -2  },
+    { rank: 9,  name: 'RajaHunter',   points: 45,  delta: 1   },
+    { rank: 10, name: 'GhostRecon',   points: 30,  delta: 0   },
+  ];
+  const DEMO_LEADERBOARD_ALLTIME = [
+    { rank: 1,  name: 'XR Slayer',    points: 18250, delta: 0  },
+    { rank: 2,  name: 'ShadowOG',     points: 16120, delta: 0  },
+    { rank: 3,  name: 'NovaX',        points: 14980, delta: 0  },
+    { rank: 4,  name: 'BlazeOP',      points: 12870, delta: 0  },
+    { rank: 5,  name: 'Venom PlayZ',  points: 11800, delta: 0  },
+    { rank: 6,  name: 'FrostByte',    points: 9740,  delta: 0  },
+    { rank: 7,  name: 'Ahad Plays',   points: 8690,  delta: 0  },
+    { rank: 8,  name: 'RajaHunter',   points: 7655,  delta: 0  },
+    { rank: 9,  name: 'ViperX',       points: 6610,  delta: 0  },
+    { rank: 10, name: 'GhostRecon',   points: 5585,  delta: 0  },
+  ];
+  const DEMO_LEADERBOARD = DEMO_LEADERBOARD_WEEKLY; // default period shown on load
+
+  (async function () {
+    const user = Api.user();
+    document.getElementById('welcomeTitle').textContent = `Welcome back, ${user.username}! 👋`;
+    Api.get('/teams/my.php').then(t => {
+      const teams = t.teams || [];
+      if (teams.length) {
+        document.getElementById('welcomeTitle').textContent = `Welcome back, ${teams[0].name}! 👋`;
+      }
+    }).catch(() => {});
+
+try {
+      const data = await Api.get('/dashboard.php');
+      paintStats(data.stats);
+      // Backend can return either `latest_scrims` (array — preferred, shows
+      // every open/recent scrim an admin has posted) or the older single
+      // `latest_scrim` object. Normalize both into an array so the UI
+      // always supports more than one card without waiting on a backend change.
+      const scrims = Array.isArray(data.latest_scrims)
+        ? data.latest_scrims
+        : (data.latest_scrim ? [data.latest_scrim] : []);
+      paintLatestScrims(scrims);
+      paintLeaderboard(data.leaderboard && data.leaderboard.length ? data.leaderboard : DEMO_LEADERBOARD);
+    } catch (err) {
+      paintStats({});
+      paintLatestScrims([]);
+      paintLeaderboard(DEMO_LEADERBOARD);
+    }
+
+    // Leaderboard period filter (Weekly / Today / All Time) — swaps demo data for now,
+    // will call the backend with ?period=... once /leaderboard.php is live.
+    const PERIOD_DATA = { weekly: DEMO_LEADERBOARD_WEEKLY, today: DEMO_LEADERBOARD_TODAY, alltime: DEMO_LEADERBOARD_ALLTIME };
+    const PERIOD_LABEL = { weekly: 'Weekly', today: 'Today', alltime: 'All Time' };
+    document.querySelectorAll('.lb-period-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const period = btn.dataset.period;
+        document.getElementById('lbPeriodLabel').textContent = PERIOD_LABEL[period];
+        document.querySelectorAll('.lb-period-option').forEach(b => b.classList.toggle('active', b === btn));
+        paintLeaderboard(PERIOD_DATA[period]);
+        document.getElementById('lbPeriodDropdown').classList.remove('open');
+      });
+    });
+  })();
+
+function paintStats(s) {
+  s = s || {};
+  const n = (v) => (typeof v === 'number' ? v : 0);
+  document.getElementById('statGrid').innerHTML = `
+    <div class="card stat-card"><div class="icon icon-blue">${ICONS.calendar}</div><div class="label">Latest Scrims</div><div class="value">${n(s.upcoming)}</div><div class="sub">Recent scrims booked</div></div>
+        <div class="card stat-card"><div class="icon icon-green">${ICONS.check}</div><div class="label">Confirmed Bookings</div><div class="value">${n(s.confirmed)}</div><div class="sub">Total confirmed</div></div>
+    <div class="card stat-card"><div class="icon icon-orange">${ICONS.clock}</div><div class="label">Pending Payments</div><div class="value">${n(s.pending)}</div><div class="sub">Awaiting verification</div></div>
+    <div class="card stat-card"><div class="icon icon-purple">${ICONS.trophy}</div><div class="label">Total Played</div><div class="value">${n(s.played)}</div><div class="sub">Scrims played</div></div>
+    <div class="card stat-card"><div class="icon icon-dark">${ICONS.wallet}</div><div class="label">Total Spent</div><div class="value">${typeof s.spent === 'number' ? money(s.spent) : (s.spent || money(0))}</div><div class="sub">On scrim bookings</div></div>
+  `;
+}
+
+  // Renders one scrim as an ecommerce-style product card. Pure function —
+  // returns an HTML string, doesn't touch the DOM itself, so it can be
+  // reused to paint any number of scrims (1, 2, or however many the admin
+  // has posted) inside the same container. Uses only CSS variables
+  // (var(--surface), var(--accent) etc.) so it renders correctly in both
+  // light and dark theme with zero extra code.
+
+  // Booking auto-closes this many minutes before match start — the card
+  // stays in the list either way (it's just "latest N scrims by created_at",
+  // nothing ever removes it), only the badge/CTA switch to "Booking Closed".
+  const BOOKING_CUTOFF_MINUTES = 30;
+
+  function renderScrimProductCard(sc) {
+    const remaining = sc.total_slots - (sc.booked || 0);
+    const isFull = remaining <= 0;
+    const matchAt = sc.match_at ? new Date(sc.match_at.replace(' ', 'T')) : null;
+    const cutoffAt = matchAt ? new Date(matchAt.getTime() - BOOKING_CUTOFF_MINUTES * 60000) : null;
+    const now = new Date();
+    const bookingClosed = cutoffAt ? now >= cutoffAt : false;
+
+    const whenStr = matchAt ? `${matchAt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })} • ${matchAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}` : '';
+
+    // Badge: Booking Closed (time cutoff) takes priority over Full, which
+    // takes priority over Open.
+    let badgeCls = 'badge-success', badgeLabel = 'Open';
+    if (bookingClosed) { badgeCls = 'badge-danger'; badgeLabel = 'Booking Closed'; }
+    else if (isFull) { badgeCls = 'badge-danger'; badgeLabel = 'Full'; }
+
+    // CTA reflects the real booking state for THIS user on THIS scrim —
+    // not booked yet / payment awaiting owner approval / owner confirmed —
+    // and now also respects the time cutoff even if slots are still free.
+    // A booked scrim stays visible in the list — it never disappears,
+    // it just swaps its button to show the booking's current state.
+    let ctaClass = '';
+    let ctaLabel = 'Book Slot';
+    if (sc.my_booking_status === 'confirmed') {
+      ctaClass = 'is-secondary'; ctaLabel = 'Booked';
+    } else if (sc.my_booking_status === 'pending') {
+      ctaClass = 'is-secondary'; ctaLabel = 'Pending';
+    } else if (bookingClosed) {
+      ctaClass = 'is-disabled'; ctaLabel = 'Closed';
+    } else if (isFull) {
+      ctaClass = 'is-disabled'; ctaLabel = 'Full';
+    }
+
+    // Slot dots — small visual indicator of how full the scrim is (max 5 shown).
+    const dotCount = Math.min(5, sc.total_slots || 0);
+    const bookedDots = Math.min(dotCount, sc.booked || 0);
+    let dotsHtml = '';
+    for (let i = 0; i < dotCount; i++) {
+      dotsHtml += `<span class="slot-dot ${i < bookedDots ? 'is-booked' : 'is-open'}"></span>`;
+    }
+
+    // The countdown text itself is filled in and ticked live by
+    // tickScrimCountdowns() — this just reserves the element and tags it
+    // with the two timestamps it needs (data attributes, no re-render).
+    const countdownHtml = matchAt ? `
+      <div class="scrim-countdown-row">
+        <span class="scrim-countdown-dot"></span>
+        <span class="scrim-countdown-text js-scrim-countdown"
+              data-match-at="${matchAt.toISOString()}"
+              data-cutoff-at="${cutoffAt.toISOString()}">--</span>
+      </div>` : '';
+
+    // Shown to every team member once anyone on the team has booked —
+    // "Booked by you" if it was this user, otherwise their name.
+    const bookedByHtml = sc.my_booking_status ? `
+      <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">
+        Booked by ${sc.booked_by_me ? 'you' : escapeHtml(sc.booked_by_username || 'a teammate')}
+      </div>` : '';
+
+// Once your team's booking is confirmed, the card should take you straight to
+    // My Bookings — that's where the WhatsApp group link actually lives, not here.
+    const cardHref = sc.my_booking_status === 'confirmed' ? 'my-bookings.html' : `scrim.html?id=${sc.id}`;
+
+    return `
+      <a href="${cardHref}" class="scrim-product-card">
+        <div class="scrim-product-media">
+          <img src="${sc.banner || 'https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=400&h=200&fit=crop'}" alt="${escapeHtml(sc.title)}">
+          <span class="scrim-product-tag">${escapeHtml(sc.game_name || 'Scrim')}</span>
+          <span class="scrim-product-badge badge ${badgeCls}">${badgeLabel}</span>
+        </div>
+        <div class="scrim-product-body">
+          <div class="scrim-product-title">${escapeHtml(sc.title)}</div>
+          <div class="scrim-product-meta">${whenStr}${whenStr && (sc.map || sc.mode) ? ' • ' : ''}${sc.map || ''}${sc.map && sc.mode ? ' • ' : ''}${sc.mode || ''}</div>
+          <div class="scrim-product-slots-row">
+            ${dotsHtml}
+            <span class="scrim-product-slots-count">${remaining}/${sc.total_slots} slots open</span>
+          </div>
+          ${countdownHtml}
+          ${bookedByHtml}
+          <div class="scrim-product-footer">
+            <div>
+              <div class="scrim-product-price-label">Per slot</div>
+              <div class="scrim-product-price">${money(sc.price_per_slot)}</div>
+            </div>
+            <span class="scrim-product-cta ${ctaClass}">${ctaLabel}</span>
+          </div>
+        </div>
+      </a>`;
+  }
+
+  // Paints however many scrims the backend sends — one card if there's
+  // one, several stacked cards if the admin has posted more. The list
+  // itself never shrinks/removes cards based on time — a scrim stays
+  // visible here until a newer one pushes it out of the LIMIT, exactly
+  // matching "yeh scrim tab tak rahe jab tak new scrim na bane".
+  function paintLatestScrims(scrims) {
+    const container = document.getElementById('latestScrimCard');
+    if (!scrims || !scrims.length) {
+      container.innerHTML = `<div class="empty-state" style="padding:24px 0;">No scrims posted yet — check back soon!</div>`;
+      tickScrimCountdowns.stop();
+      return;
+    }
+    container.innerHTML = `<div class="scrim-product-list">${scrims.map(renderScrimProductCard).join('')}</div>`;
+    tickScrimCountdowns.start();
+  }
+
+  /**
+   * Live countdown ticker — updates every card's countdown text once a
+   * second WITHOUT re-rendering the cards (just textContent on the small
+   * span), so it's smooth with no flicker. A single shared interval for
+   * every card on the page rather than one timer per card.
+   */
+  const tickScrimCountdowns = {
+    intervalId: null,
+    start() {
+      this.stop();
+      this.tick(); // paint immediately, don't wait 1s for first frame
+      this.intervalId = setInterval(() => this.tick(), 1000);
+    },
+    stop() {
+      if (this.intervalId) clearInterval(this.intervalId);
+      this.intervalId = null;
+    },
+    tick() {
+      const now = Date.now();
+      document.querySelectorAll('.js-scrim-countdown').forEach(el => {
+        const matchAt = new Date(el.dataset.matchAt).getTime();
+        const cutoffAt = new Date(el.dataset.cutoffAt).getTime();
+        const dot = el.previousElementSibling;
+
+        if (now >= matchAt) {
+          el.textContent = 'Match started';
+          el.className = 'scrim-countdown-text js-scrim-countdown is-closed';
+          if (dot) dot.className = 'scrim-countdown-dot is-closed';
+          return;
+        }
+
+        const msLeft = (now >= cutoffAt ? matchAt : cutoffAt) - now;
+        const label = now >= cutoffAt ? 'Match starts in ' : 'Booking closes in ';
+        const state = now >= cutoffAt ? 'is-closing' : '';
+
+        const totalSec = Math.floor(msLeft / 1000);
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+        const parts = h > 0 ? [h + 'h', m + 'm', s + 's'] : [m + 'm', s + 's'];
+
+        el.textContent = label + parts.join(' ');
+        el.className = 'scrim-countdown-text js-scrim-countdown ' + state;
+        if (dot) dot.className = 'scrim-countdown-dot ' + state;
+      });
+    }
+  };
+
+  // ---------------------------------------------------------------
+  // LEADERBOARD — top 10, ranked. Swap DEMO_LEADERBOARD for live
+  // backend data once /dashboard.php returns a `leaderboard` array.
+  // ---------------------------------------------------------------
+  function leaderboardInitials(name) {
+    return name.trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join('');
+  }
+
+  function paintLeaderboard(list) {
+    document.getElementById('leaderboardList').innerHTML = list.length ? list.map(p => {
+      const isTop3 = p.rank <= 3;
+      const rankCls = p.rank === 1 ? 'rank-gold' : p.rank === 2 ? 'rank-silver' : p.rank === 3 ? 'rank-bronze' : '';
+      const deltaUp = p.delta > 0;
+      const deltaFlat = p.delta === 0;
+      const deltaCls = deltaFlat ? '' : (deltaUp ? 'up' : 'down');
+      const deltaIcon = deltaFlat ? '' : (deltaUp
+        ? '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 19V5M5 12l7-7 7 7"/></svg>'
+        : '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12l7 7 7-7"/></svg>');
+      return `
+      <div class="leaderboard-row">
+        <div class="leaderboard-rank ${isTop3 ? 'leaderboard-rank-top ' + rankCls : ''}">${p.rank}</div>
+        <div class="leaderboard-avatar">${leaderboardInitials(p.name)}</div>
+        <div class="leaderboard-name">
+          ${escapeHtml(p.name)}
+          ${!deltaFlat ? `<span class="leaderboard-delta ${deltaCls}">${deltaIcon}${Math.abs(p.delta)}</span>` : ''}
+        </div>
+        <div class="leaderboard-points">${p.points.toLocaleString()}<span class="pts-label">Points</span></div>
+      </div>`;
+    }).join('') : `<div class="empty-state" style="padding:24px 0;">Leaderboard updates after this week's scrims.</div>`;
+
+    LeaderboardTicker.start();
+  }
+
+  /**
+   * Slow, continuous ping-pong auto-scroll through the leaderboard list.
+   * A single shared object (not a fresh closure per call) so re-painting the
+   * list — e.g. switching the Weekly/Today/All Time filter — cancels any
+   * previous animation loop instead of stacking a second one on top of it.
+   */
+  const LeaderboardTicker = {
+    rafId: null,
+    pos: 0,
+    direction: 1,
+    SPEED: 0.28,       // px per animation frame — deliberately slow/smooth
+    EDGE_PAUSE_MS: 1400,
+    pauseUntil: 0,
+
+    start() {
+      const viewport = document.getElementById('leaderboardViewport');
+      if (!viewport) return;
+      if (this.rafId) cancelAnimationFrame(this.rafId); // stop any previous loop first
+
+      this.pos = 0;
+      this.direction = 1;
+      this.pauseUntil = 0;
+      viewport.scrollTop = 0;
+
+      const maxScroll = viewport.scrollHeight - viewport.clientHeight;
+      if (maxScroll <= 4) return; // everything already fits, nothing to scroll
+
+      const step = (ts) => {
+        if (ts >= this.pauseUntil) {
+          this.pos += this.SPEED * this.direction;
+          if (this.direction === 1 && this.pos >= maxScroll) {
+            this.pos = maxScroll;
+            this.direction = -1;
+            this.pauseUntil = ts + this.EDGE_PAUSE_MS;
+          } else if (this.direction === -1 && this.pos <= 0) {
+            this.pos = 0;
+            this.direction = 1;
+            this.pauseUntil = ts + this.EDGE_PAUSE_MS;
+          }
+          viewport.scrollTop = this.pos;
+        }
+        this.rafId = requestAnimationFrame(step);
+      };
+      this.rafId = requestAnimationFrame(step);
+    }
+  };
+  </script>
+</body>
+</html>

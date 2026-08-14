@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results — Infinity Scrims Owner</title>
+ <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <style>
+    .upload-drop {
+      border: 1.5px dashed var(--border); border-radius: 12px; padding: 28px; text-align: center; cursor: pointer;
+      transition: border-color .18s ease, background-color .18s ease;
+    }
+    .upload-drop:hover { border-color: var(--accent); background: var(--surface-alt); }
+    .upload-drop svg { width: 26px; height: 26px; color: var(--text-muted); margin: 0 auto 8px; }
+    .upload-preview { display: none; align-items: center; gap: 12px; border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-top: 10px; }
+    .upload-preview img { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+    .needs-review-row { background: var(--warning-bg); }
+  </style>
+</head>
+<body data-page="results">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content" data-skeleton="off">
+        <div class="breadcrumb"><a href="dashboard.html">Dashboard</a> &gt; <span class="current">Results</span></div>
+        <h1 class="page-title">Publish Results</h1>
+        <p class="page-sub">Upload the final scoreboard screenshot — AI reads it and matches teams automatically. Review, fix anything it missed, then publish to the leaderboard.</p>
+
+        <div class="card" style="margin-bottom:20px;">
+          <div class="field" style="margin-bottom:0;">
+            <label>Select Scrim</label>
+            <select id="scrimSelect"><option>Loading scrims...</option></select>
+          </div>
+        </div>
+
+        <!-- ============ STEP 1: Upload screenshot ============ -->
+        <div class="card" id="uploadCard">
+          <div class="card-title">Scoreboard Screenshot</div>
+          <div class="upload-drop" id="dropZone">
+            <input type="file" id="screenshotInput" accept="image/png,image/jpeg,image/webp" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <div style="font-weight:700; font-size:13px;">Click to upload the final scoreboard screenshot</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">JPG, PNG or WEBP · Max 5MB</div>
+          </div>
+          <div class="upload-preview" id="uploadPreview">
+            <img id="previewImg" alt="Scoreboard screenshot">
+            <div style="flex:1;">
+              <div style="font-weight:700; font-size:12.5px;" id="previewName"></div>
+              <div style="font-size:11px; color:var(--text-muted);" id="previewSize"></div>
+            </div>
+            <button class="btn btn-outline btn-sm" id="removeScreenshotBtn">Remove</button>
+          </div>
+          <button class="btn btn-block" id="analyzeBtn" style="margin-top:16px;" disabled>Upload &amp; Analyze with AI</button>
+          <p style="font-size:11.5px; color:var(--text-muted); margin-top:10px;">
+            AI can't read this screenshot? You can still <button type="button" class="link-btn" id="skipToManualBtn" style="background:none; border:none; padding:0; color:var(--info); font-weight:600; cursor:pointer;">upload anyway and enter results manually</button> — a screenshot is required either way, as proof of the final standings.
+          </p>
+        </div>
+
+        <!-- ============ STEP 2: Review parsed entries ============ -->
+        <div class="card" id="reviewCard" style="display:none;">
+          <div class="card-title">
+            <span id="reviewTitle">Review Results</span>
+            <button class="btn btn-sm btn-outline" onclick="addManualRow()">+ Add Team</button>
+          </div>
+          <p id="reviewHint" style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;"></p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Pos</th><th>Team</th><th>Slot</th><th>Kills</th><th>Points</th><th></th></tr></thead>
+              <tbody id="entriesBody"></tbody>
+            </table>
+          </div>
+          <div style="display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;">
+            <button class="btn btn-outline" id="startOverBtn">Start Over</button>
+            <button class="btn" id="publishBtn" style="flex:1; min-width:180px;">Publish to Leaderboard</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/owner-common.js"></script>
+  <script>
+    let selectedScrimId = null;
+    let confirmedTeams = [];   // for the reassign-team dropdown
+    let currentResultId = null;
+    let entries = [];          // what's shown in the review table
+    let manualRowId = -1;      // negative ids = new manual rows not yet saved
+
+
+// ---------------- Scrim picker ----------------
+async function loadScrims() {
+      try {
+        const data = await Api.get('/scrims/my.php');
+        const select = document.getElementById('scrimSelect');
+        // Only scrims that haven't had a result published yet — once published, they're
+        // done here (edit the leaderboard directly if needed; this page is for new publishes).
+        const rows = data.scrims.filter(s => !['draft', 'cancelled'].includes(s.status) && !s.has_published_result);
+        if (!rows.length) {
+          select.innerHTML = '<option value="">No scrims waiting for results</option>';
+          selectedScrimId = null;
+          document.getElementById('uploadCard').style.display = 'none';
+          return;
+        }
+        document.getElementById('uploadCard').style.display = 'block';
+        select.innerHTML = rows.map(s => `<option value="${s.id}">${escapeHtml(s.title)} (${s.status})</option>`).join('');
+        selectedScrimId = select.value || null;
+        select.addEventListener('change', () => { selectedScrimId = select.value; resetFlow(); });
+        if (selectedScrimId) loadConfirmedTeams(selectedScrimId);
+      } catch (err) {
+        document.getElementById('scrimSelect').innerHTML = '<option>No scrims found</option>';
+      }
+    }
+    // ---------------- Screenshot upload ----------------
+    const dropZone = document.getElementById('dropZone');
+    const screenshotInput = document.getElementById('screenshotInput');
+    let screenshotFile = null;
+
+    dropZone.addEventListener('click', () => screenshotInput.click());
+    screenshotInput.addEventListener('change', () => {
+      const f = screenshotInput.files[0];
+      if (!f) return;
+      if (f.size > 5 * 1024 * 1024) { toast('Screenshot must be 5MB or smaller.', 'error'); screenshotInput.value = ''; return; }
+      screenshotFile = f;
+      document.getElementById('previewImg').src = URL.createObjectURL(f);
+      document.getElementById('previewName').textContent = f.name;
+      document.getElementById('previewSize').textContent = Math.round(f.size / 1024) + ' KB';
+      dropZone.style.display = 'none';
+      document.getElementById('uploadPreview').style.display = 'flex';
+      document.getElementById('analyzeBtn').disabled = false;
+    });
+    document.getElementById('removeScreenshotBtn').addEventListener('click', () => {
+      screenshotFile = null;
+      screenshotInput.value = '';
+      dropZone.style.display = '';
+      document.getElementById('uploadPreview').style.display = 'none';
+      document.getElementById('analyzeBtn').disabled = true;
+    });
+
+    async function runUpload() {
+      if (!selectedScrimId) { toast('Select a scrim first.', 'error'); return; }
+      if (!screenshotFile) { toast('Upload a screenshot first.', 'error'); return; }
+
+      const btn = document.getElementById('analyzeBtn');
+      const original = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Reading screenshot with AI…';
+      try {
+        const fd = new FormData();
+        fd.append('scrim_id', selectedScrimId);
+        fd.append('screenshot', screenshotFile);
+        const data = await Api.postForm('/results/upload.php', fd);
+
+        currentResultId = data.result_id;
+        entries = (data.entries || []).map(e => ({
+          id: e.id, position: e.position, team_id: e.matched_team_id,
+          team_name_raw: e.team_name_raw, slot_number: e.slot_number,
+          kills: e.kills, placement_pts: e.placement_pts, total_points: e.total_points,
+          needs_review: e.needs_review,
+        }));
+
+        document.getElementById('uploadCard').style.display = 'none';
+        document.getElementById('reviewCard').style.display = 'block';
+
+        if (data.ai_status === 'failed' || entries.length === 0) {
+          document.getElementById('reviewTitle').textContent = "AI couldn't read this screenshot";
+          document.getElementById('reviewHint').textContent = 'No teams were detected automatically. Add each team\'s result manually below using "+ Add Team", then publish.';
+        } else {
+          document.getElementById('reviewTitle').textContent = `AI detected ${entries.length} team${entries.length === 1 ? '' : 's'}`;
+          const unmatched = entries.filter(e => e.needs_review).length;
+          document.getElementById('reviewHint').textContent = unmatched
+            ? `${unmatched} row${unmatched === 1 ? '' : 's'} highlighted below couldn't be matched to a registered team — pick the right one from the dropdown before publishing.`
+            : 'All teams matched correctly. Double-check the numbers, then publish.';
+        }
+        renderEntries();
+      } catch (err) {
+        toast(err.message || 'Could not analyze screenshot.', 'error');
+      } finally {
+        btn.disabled = false; btn.textContent = original;
+      }
+    }
+    document.getElementById('analyzeBtn').addEventListener('click', runUpload);
+    document.getElementById('skipToManualBtn').addEventListener('click', () => {
+      if (!screenshotFile) { toast('Choose a screenshot first (still required as proof), then this will skip straight to manual entry.', 'info'); return; }
+      runUpload(); // AI will still try, but the hint above already told them they can fully edit/add manually after
+    });
+
+    // ---------------- Review table ----------------
+// Confirmed teams for this scrim — used to populate the reassign-team dropdown
+    // in the review table below.
+    async function loadConfirmedTeams(scrimId) {
+      try {
+        const data = await Api.get('/scrims/participants.php?scrim_id=' + scrimId);
+        confirmedTeams = (data.participants || [])
+          .filter(p => p.booking_status === 'confirmed')
+          .map(p => ({ team_id: p.team_id, team_name: p.team_name, slot_number: p.slot_number }));
+      } catch (err) {
+        confirmedTeams = [];
+      }
+    }
+
+    // ---------------- Review table ----------------
+    function teamOptionsHtml(selectedId) {
+            return `<option value="">— unmatched —</option>` + confirmedTeams.map(t =>
+        `<option value="${t.team_id}" ${String(t.team_id) === String(selectedId) ? 'selected' : ''}>${escapeHtml(t.team_name)} (Slot #${t.slot_number})</option>`
+      ).join('');
+    }
+
+    function renderEntries() {
+      entries.sort((a, b) => a.position - b.position);
+      document.getElementById('entriesBody').innerHTML = entries.length ? entries.map(e => `
+        <tr class="${e.needs_review && !e.team_id ? 'needs-review-row' : ''}">
+          <td><input type="number" value="${e.position}" style="width:56px;" onchange="updateEntry(${e.id}, 'position', this.value)"></td>
+          <td>
+            <select onchange="updateEntry(${e.id}, 'team_id', this.value)" style="min-width:170px;">${teamOptionsHtml(e.team_id)}</select>
+            ${e.team_name_raw ? `<div style="font-size:10.5px; color:var(--text-muted); margin-top:3px;">AI read: "${escapeHtml(e.team_name_raw)}"</div>` : ''}
+          </td>
+          <td>${e.slot_number ?? '—'}</td>
+          <td><input type="number" value="${e.kills}" style="width:64px;" onchange="updateEntry(${e.id}, 'kills', this.value)"></td>
+          <td><input type="number" value="${e.total_points}" style="width:64px;" onchange="updateEntry(${e.id}, 'total_points', this.value)"></td>
+          <td><button class="btn btn-sm btn-outline" onclick="removeEntry(${e.id}, this)">Remove</button></td>
+        </tr>
+      `).join('') : `<tr><td colspan="6"><div class="empty-state">No entries yet — click "+ Add Team"</div></td></tr>`;
+    }
+
+    function addManualRow() {
+      entries.push({
+        id: manualRowId--, position: entries.length + 1, team_id: null,
+        team_name_raw: null, slot_number: null, kills: 0, placement_pts: 0, total_points: 0, needs_review: true,
+      });
+      renderEntries();
+    }
+
+async function removeEntry(id, btnEl) {
+      if (btnEl) { if (btnEl.disabled) return; btnEl.disabled = true; } // guard against double-click firing two deletes
+
+      // Only rows already saved to the DB (positive id) need an actual delete call —
+      // rows still unsaved locally (negative id, added but never edited yet) just drop from the array.
+      if (id > 0) {
+        try {
+          await Api.post('/results/delete_entry.php', { entry_id: id });
+        } catch (err) {
+          // If it's already gone (e.g. a duplicate click slipped through), don't show a scary error —
+          // just treat it as removed. Only surface genuinely unexpected failures.
+          if (!/not found/i.test(err.message || '')) {
+            toast(err.message || 'Could not remove that entry.', 'error');
+            if (btnEl) btnEl.disabled = false;
+            return;
+          }
+        }
+      }
+      entries = entries.filter(e => e.id !== id);
+      renderEntries();
+    }
+
+    // Saved to the backend immediately: existing (AI-created) rows go through
+    // update_entry.php. Manual rows (negative id) are created on first edit via
+    // add_entry.php, which returns a real id — after that they behave the same.
+    async function updateEntry(id, field, value) {
+      const row = entries.find(e => e.id === id);
+      if (!row) return;
+      row[field] = field === 'team_id' ? (value ? Number(value) : null) : Number(value) || 0;
+      row.needs_review = !row.team_id;
+
+      try {
+        if (id > 0) {
+          const payload = { entry_id: id };
+          payload[field] = row[field];
+          const data = await Api.post('/results/update_entry.php', payload);
+          row.total_points = data.total_points;
+        } else {
+          const data = await Api.post('/results/add_entry.php', {
+            result_id: currentResultId, position: row.position, team_id: row.team_id, kills: row.kills,
+          });
+          row.id = data.entry_id;             // now a real DB id — future edits use update_entry.php
+          row.total_points = data.total_points;
+        }
+      } catch (err) {
+        toast(err.message || 'Could not save that change.', 'error');
+      }
+      renderEntries();
+    }
+
+// ---------------- Publish ----------------
+document.getElementById('publishBtn').addEventListener('click', async () => {
+      if (!currentResultId) { toast('Upload a screenshot first.', 'error'); return; }
+      if (!entries.length) {
+        if (!confirm('No teams in this result — publish anyway with an empty leaderboard entry for this scrim?')) return;
+      }
+
+      const btn = document.getElementById('publishBtn');
+      const original = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Publishing...';
+
+      // Check client-side first — rows still showing "— unmatched —" have no team_id.
+      const unmatchedCount = entries.filter(e => !e.team_id).length;
+      let force = false;
+      if (unmatchedCount > 0) {
+        if (!confirm(`${unmatchedCount} row(s) are still unmatched to a team. Publish anyway with these left out of the leaderboard?`)) {
+          btn.disabled = false; btn.textContent = original;
+          return;
+        }
+        force = true;
+      }
+
+      try {
+        await Api.post('/results/publish.php', { result_id: currentResultId, force: force ? 1 : undefined });
+        toast('Result published! Leaderboard updated.', 'success');
+        setTimeout(() => window.location.href = 'dashboard.html', 800);
+      } catch (err) {
+        if (err.status === 422 && /could not be matched/i.test(err.message || '')) {
+          if (confirm(err.message + '\n\nPublish anyway with these left unmatched?')) {
+            try {
+              await Api.post('/results/publish.php', { result_id: currentResultId, force: 1 });
+              toast('Result published! Leaderboard updated.', 'success');
+              setTimeout(() => window.location.href = 'dashboard.html', 800);
+              return;
+            } catch (err2) {
+              toast(err2.message || 'Could not publish result.', 'error');
+            }
+          }
+        } else {
+          toast(err.message || 'Could not publish result.', 'error');
+        }
+      } finally {
+        btn.disabled = false; btn.textContent = original;
+      }
+    });
+
+    document.getElementById('startOverBtn').addEventListener('click', resetFlow);
+    function resetFlow() {
+      currentResultId = null;
+      entries = [];
+      screenshotFile = null;
+      screenshotInput.value = '';
+      dropZone.style.display = '';
+      document.getElementById('uploadPreview').style.display = 'none';
+      document.getElementById('analyzeBtn').disabled = true;
+      document.getElementById('uploadCard').style.display = 'block';
+      document.getElementById('reviewCard').style.display = 'none';
+      if (selectedScrimId) loadConfirmedTeams(selectedScrimId);
+    }
+
+    loadScrims();
+  </script>
+</body>
+</html>

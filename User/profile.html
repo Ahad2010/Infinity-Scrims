@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile — Infinity Scrims</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.webp">
+</head>
+<body data-page="profile">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content">
+        <div class="breadcrumb"><a href="dashboard.html">Dashboard</a> &gt; <span class="current">Profile</span></div>
+        <h1 class="page-title">Profile</h1>
+        <p class="page-sub">Your account details.</p>
+
+        <div class="grid-2">
+          <div>
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-title">Profile Photo</div>
+              <div style="display:flex; align-items:center; gap:16px;">
+                <div id="pAvatar" style="width:64px;height:64px;border-radius:50%;background:#0c0d10;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px; flex-shrink:0; overflow:hidden;">?</div>
+                <div>
+                  <input type="file" id="pAvatarInput" accept="image/png,image/jpeg,image/webp" style="display:none;">
+                  <button class="btn btn-outline btn-sm" onclick="document.getElementById('pAvatarInput').click()">Upload New Photo</button>
+                  <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">PNG, JPG or WEBP, up to 5MB.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-title">Account</div>
+              <div class="dl-row"><span class="k">Role</span><span class="v" id="pRole">-</span></div>
+              <div class="dl-row"><span class="k">Email</span><span class="v" id="pEmailReadonly">-</span></div>
+              <div class="dl-row"><span class="k">Member Since</span><span class="v" id="pSince">-</span></div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">Edit Details</div>
+              <div class="form-row">
+                <div class="field"><label>Username</label><input type="text" id="pUsername"></div>
+                <div class="field"><label>Phone</label><input type="tel" id="pPhone" placeholder="03xx-xxxxxxx"></div>
+              </div>
+              <p id="pMsg" class="text-danger" style="font-size:12px; display:none; margin-bottom:12px;"></p>
+              <button class="btn" id="pSaveBtn">Save Changes</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Recent Activity</div>
+            <div id="pActivityList">
+              <div class="skeleton skeleton-line"></div>
+              <div class="skeleton skeleton-line"></div>
+              <div class="skeleton skeleton-line"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+
+  <div id="support-widget-mount"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/demo-seed.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/support-widget.js"></script>
+  <script>
+    function initials(name) {
+      return (name || '?').trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join('');
+    }
+
+    function loadProfile() {
+      const u = Api.user();
+      if (!u) return;
+      document.getElementById('pAvatar').textContent = initials(u.username);
+if (u.avatar) {
+        // Prefer avatar_url (full URL, from newer login/update responses); fall back to
+        // building it from the raw relative path for older cached sessions.
+        const src = u.avatar_url || (API_BASE.replace(/\/api$/, '/uploads') + '/' + u.avatar);
+        document.getElementById('pAvatar').innerHTML = `<img src="${src}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      }
+            document.getElementById('pRole').textContent = u.role === 'owner' ? 'Owner' : 'Player';
+      document.getElementById('pEmailReadonly').textContent = u.email;
+      document.getElementById('pSince').textContent = u.created_at
+        ? new Date(u.created_at.replace(' ', 'T')).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        : '-';
+      document.getElementById('pUsername').value = u.username;
+      document.getElementById('pPhone').value = u.phone || '';
+    }
+    loadProfile();
+
+    async function loadActivity() {
+      const list = document.getElementById('pActivityList');
+      try {
+        const data = await Api.get('/dashboard.php');
+        const items = data.activity || [];
+        list.innerHTML = items.length ? items.map(a => {
+          const ai = activityIcon(a.type);
+          return `
+          <div class="notif-item">
+            <div class="row-icon badge ${ai.cls}" style="width:34px;height:34px;">${ai.icon}</div>
+            <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between; gap:10px;">
+                <b style="font-size:13px;">${escapeHtml(a.title)}</b>
+                <span style="font-size:11px; color:var(--text-muted); white-space:nowrap;">${a.ago}</span>
+              </div>
+              ${a.body ? `<div style="font-size:12px; color:var(--text-muted); margin-top:2px; white-space:pre-line;">${escapeHtml(a.body)}</div>` : ''}
+            </div>
+          </div>`;
+        }).join('') : `<div class="empty-state" style="padding:24px 0;">No recent activity yet.</div>`;
+      } catch (err) {
+        list.innerHTML = `<div class="empty-state" style="padding:24px 0;">Could not load recent activity.</div>`;
+      }
+    }
+    loadActivity();
+
+    document.getElementById('pSaveBtn').addEventListener('click', async () => {
+      const msg = document.getElementById('pMsg');
+      msg.style.display = 'none';
+
+      const fd = new FormData();
+      fd.append('username', document.getElementById('pUsername').value.trim());
+      fd.append('phone', document.getElementById('pPhone').value.trim());
+      const avatarFile = document.getElementById('pAvatarInput').files[0];
+      if (avatarFile) fd.append('avatar', avatarFile);
+
+      const btn = document.getElementById('pSaveBtn');
+      btn.disabled = true; btn.textContent = 'Saving...';
+      try {
+        const data = await Api.postForm('/profile/update.php', fd);
+        localStorage.setItem('is_user', JSON.stringify({ ...Api.user(), ...data.user }));
+        loadProfile();
+        toast('Profile updated.', 'success');
+      } catch (err) {
+        msg.textContent = err.message || 'Could not update profile.';
+        msg.style.display = 'block';
+      } finally {
+        btn.disabled = false; btn.textContent = 'Save Changes';
+      }
+    });
+  </script>
+</body>
+</html>

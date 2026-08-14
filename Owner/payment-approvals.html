@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Approvals — Infinity Scrims Owner</title>
+ <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+</head>
+<body data-page="payment-approvals">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content" data-skeleton="off">
+        <div class="breadcrumb"><a href="dashboard.html">Dashboard</a> &gt; <span class="current">Payment Approvals</span></div>
+        <h1 class="page-title">Payment Approval Queue</h1>
+        <p class="page-sub">Review and approve or reject payment proof submitted by players.</p>
+
+        <div class="stat-grid" id="statGrid">
+          <div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-bottom:16px;" id="statusTabs">
+          <button class="btn btn-sm" data-status="pending">Pending</button>
+          <button class="btn btn-outline btn-sm" data-status="approved">Approved</button>
+          <button class="btn btn-outline btn-sm" data-status="rejected">Rejected</button>
+        </div>
+
+        <div class="table-wrap card">
+          <table>
+<thead><tr><th>User</th><th>Scrim Details</th><th>Slot</th><th>Prize Pool</th><th>Scrim Profit/Loss</th><th>Payment Method</th><th>Screenshot</th><th>Requested</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="payBody"><tr><td colspan="10"><div class="skeleton skeleton-line"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+
+  <!-- Reject reason modal -->
+  <div class="modal-overlay" id="rejectModal">
+    <div class="modal">
+      <h3>Reject Payment</h3>
+      <p>Reject karne ki wajah likhein (optional).</p>
+      <div class="field"><textarea id="rejectReason" placeholder="e.g. Screenshot amount match nahi karta"></textarea></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline btn-block" onclick="closeModal('rejectModal')">Cancel</button>
+        <button class="btn btn-danger btn-block" onclick="confirmReject()">Reject Payment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screenshot preview modal -->
+  <div class="modal-overlay" id="screenshotModal">
+    <div class="modal" style="max-width:520px;">
+      <h3>Payment Screenshot</h3>
+      <div style="margin:14px 0; text-align:center; background:var(--surface-alt); border-radius:var(--radius); padding:10px;">
+        <img id="screenshotImg" src="" style="max-width:100%; max-height:65vh; border-radius:8px; display:block; margin:0 auto;">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline btn-block" onclick="closeModal('screenshotModal')">Close</button>
+        <a id="screenshotOpenNew" href="" target="_blank" class="btn btn-block">Open Full Size</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/owner-common.js"></script>
+  <script>
+    let rejectingId = null;
+
+    async function load(status = 'pending') {
+      document.querySelectorAll('#statusTabs button').forEach(b => b.className = b.dataset.status === status ? 'btn btn-sm' : 'btn btn-outline btn-sm');
+      try {
+        const data = await Api.get('/payments/pending.php?status=' + status);
+        document.getElementById('statGrid').innerHTML = `
+          <div class="card stat-card"><div class="icon">${ICONS.clock}</div><div class="label">Pending</div><div class="value">${data.stats.pending}</div></div>
+          <div class="card stat-card"><div class="icon">${ICONS.check}</div><div class="label">Approved Today</div><div class="value">${data.stats.approved_today}</div></div>
+          <div class="card stat-card"><div class="icon">${ICONS.checkList}</div><div class="label">Rejected Today</div><div class="value">${data.stats.rejected_today}</div></div>
+        `;
+
+        document.getElementById('payBody').innerHTML = data.payments.length ? data.payments.map(p => `
+          <tr>
+            <td><div style="font-weight:600;">${escapeHtml(p.username)}</div><div style="font-size:11px; color:var(--text-muted);">${escapeHtml(p.email)}</div></td>
+            <td><div style="font-weight:600;">${escapeHtml(p.scrim_title)}</div><div style="font-size:11px; color:var(--text-muted);">Team: ${escapeHtml(p.team_name)}</div></td>
+<td>#${p.slot_number}</td>
+            <td>${p.prize_pool_txt}</td>
+            <td>${p.scrim_profit_txt}</td>
+            <td>${p.method}<br><span style="font-size:11px; color:var(--text-muted);">${p.sender_number}</span></td>
+            <td><button class="btn btn-sm btn-outline" onclick="viewScreenshot('${p.screenshot_url}')">View</button></td>
+            <td>${p.waiting}</td>
+            <td><span class="badge ${p.status === 'approved' ? 'badge-success' : p.status === 'rejected' ? 'badge-danger' : 'badge-warning'}">${p.status}</span></td>
+            <td>
+              ${p.status === 'pending' ? `
+                <div style="display:flex; gap:4px;">
+                  <button class="btn btn-sm" onclick="approve(${p.id})">Approve</button>
+                  <button class="btn btn-sm btn-outline" onclick="openReject(${p.id})">Reject</button>
+                </div>` : (p.reject_reason ? `<span style="font-size:11px; color:var(--text-muted);">${escapeHtml(p.reject_reason)}</span>` : '—')}
+            </td>
+          </tr>
+        `).join('') : `<tr><td colspan="10"><div class="empty-state">No ${status} payments</div></td></tr>`;
+      } catch (err) { toast(err.message, 'error'); }
+    }
+
+    function viewScreenshot(url) {
+      document.getElementById('screenshotImg').src = url;
+      document.getElementById('screenshotOpenNew').href = url;
+      document.getElementById('screenshotModal').classList.add('open');
+    }
+    async function approve(id) {
+      try { await Api.post('/payments/review.php', { payment_id: id, action: 'approve' }); toast('Payment approved', 'success'); load(currentStatus()); }
+      catch (err) { toast(err.message, 'error'); }
+    }
+    function openReject(id) { rejectingId = id; document.getElementById('rejectModal').classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    async function confirmReject() {
+      try {
+        await Api.post('/payments/review.php', { payment_id: rejectingId, action: 'reject', reason: document.getElementById('rejectReason').value });
+        toast('Payment rejected', 'success');
+        closeModal('rejectModal');
+        load(currentStatus());
+      } catch (err) { toast(err.message, 'error'); }
+    }
+    function currentStatus() { return document.querySelector('#statusTabs .btn:not(.btn-outline)').dataset.status; }
+
+    document.querySelectorAll('#statusTabs button').forEach(b => b.addEventListener('click', () => load(b.dataset.status)));
+    load();
+  </script>
+</body>
+</html>

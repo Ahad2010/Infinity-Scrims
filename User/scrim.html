@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Slot — Infinity Scrims</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.webp">
+  <style>
+    /* ================= HERO ================= */
+    .hero {
+      position: relative; border-radius: 18px; overflow: hidden; margin-bottom: 20px;
+      min-height: 268px; display: flex; align-items: flex-end;
+      box-shadow: 0 18px 44px rgba(10,12,20,.22);
+    }
+    .hero-bg { position: absolute; inset: 0; }
+    .hero-bg img { width: 100%; height: 100%; object-fit: cover; }
+    .hero-bg::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(105deg, rgba(8,9,12,.94) 0%, rgba(8,9,12,.80) 42%, rgba(8,9,12,.35) 100%);
+    }
+    .hero-inner { position: relative; padding: 26px 28px; width: 100%; color: #fff; }
+    .hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 14px; }
+    .live-pill {
+      display: inline-flex; align-items: center; gap: 7px; background: rgba(34,197,94,.16); color: #6ee7a0;
+      border: 1px solid rgba(34,197,94,.4); border-radius: 999px; padding: 5px 12px; font-size: 11.5px; font-weight: 700;
+      backdrop-filter: blur(6px);
+    }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,.7); animation: pulseDot 2s infinite; }
+    @keyframes pulseDot { 70% { box-shadow: 0 0 0 7px rgba(34,197,94,0); } 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); } }
+    .hero h1 { font-size: 32px; font-weight: 800; letter-spacing: -.6px; line-height: 1.12; margin-bottom: 12px; }
+    .hero-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .chip-g {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600;
+      background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16); color: rgba(255,255,255,.92);
+      padding: 6px 11px; border-radius: 9px; backdrop-filter: blur(6px);
+    }
+    .hero p.tag { font-size: 13px; color: rgba(255,255,255,.62); max-width: 520px; margin-bottom: 16px; }
+    .hero-hosted { display: flex; gap: 26px; flex-wrap: wrap; }
+    .hero-hosted .k { font-size: 10.5px; color: rgba(255,255,255,.45); display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .6px; }
+    .hero-hosted .v { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+    .hero-hosted .av { width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.2);
+                       display: flex; align-items: center; justify-content: center; font-size: 9.5px; font-weight: 800; }
+    .btn-glass {
+      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22); color: #fff; backdrop-filter: blur(8px);
+      border-radius: 10px; padding: 9px 15px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 7px; transition: background-color .18s ease;
+    }
+    .btn-glass:hover { background: rgba(255,255,255,.2); }
+
+    /* stats strip inside hero */
+    .hero-stats { display: flex; gap: 0; margin-top: 20px; border-top: 1px solid rgba(255,255,255,.14); padding-top: 16px; flex-wrap: wrap; }
+    .hero-stat { padding-right: 28px; margin-right: 28px; border-right: 1px solid rgba(255,255,255,.13); }
+    .hero-stat:last-child { border-right: none; margin-right: 0; padding-right: 0; }
+    .hero-stat .lbl { font-size: 10.5px; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 3px; }
+    .hero-stat .val { font-size: 19px; font-weight: 800; letter-spacing: -.3px; }
+    .hero-stat .val.green { color: #6ee7a0; }
+    @media (max-width: 640px) { .hero h1 { font-size: 24px; } .hero-inner { padding: 20px; } .hero-stat { padding-right: 18px; margin-right: 18px; } }
+
+    /* ================= LAYOUT ================= */
+    .checkout { display: grid; grid-template-columns: 1fr 352px; gap: 20px; align-items: start; }
+    @media (max-width: 980px) { .checkout { grid-template-columns: 1fr; } }
+
+    /* ================= TIMELINE FLOW ================= */
+    .flow { position: relative; }
+    .flow-step { position: relative; padding-left: 54px; padding-bottom: 18px; }
+    .flow-step:last-child { padding-bottom: 0; }
+    .flow-step::before {
+      content: ''; position: absolute; left: 17px; top: 38px; bottom: 0; width: 2px; background: var(--border);
+    }
+    .flow-step:last-child::before { display: none; }
+    .flow-step.done::before { background: var(--success); }
+    .flow-node {
+      position: absolute; left: 0; top: 0; width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800;
+      background: var(--surface); border: 2px solid var(--border); color: var(--text-muted); z-index: 1;
+      transition: all .3s ease;
+    }
+    .flow-step.current .flow-node { border-color: var(--accent); color: var(--text); box-shadow: 0 0 0 5px var(--surface-alt); }
+    .flow-step.done .flow-node { background: var(--success); border-color: var(--success); color: #fff; }
+    .flow-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; margin-bottom: 12px; }
+    .flow-head .ft { font-size: 16px; font-weight: 800; letter-spacing: -.2px; }
+    .flow-head .fs { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+    .flow-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+    .flow-badge.wait { background: var(--surface-alt); color: var(--text-muted); }
+    .flow-badge.now { background: var(--accent); color: var(--accent-text); }
+    .flow-badge.ok { background: var(--success-bg); color: var(--success); }
+    .flow-body { animation: fadeUp .28s ease; }
+    .flow-step.locked .flow-body { display: none; }
+    .flow-step.locked .flow-head .ft { color: var(--text-muted); }
+    .flow-locked-note { display: none; }
+    .flow-step.locked .flow-locked-note {
+      display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: var(--text-muted);
+      background: var(--surface-alt); border: 1px dashed var(--border); border-radius: 12px; padding: 14px 16px;
+    }
+    .flow-locked-note svg { flex-shrink: 0; }
+
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+
+    /* ================= FORM ================= */
+    .grid-2f { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 620px) { .grid-2f { grid-template-columns: 1fr; } }
+    .req { color: var(--danger); }
+    .phone-group { display: flex; gap: 8px; }
+    .phone-group select { max-width: 86px; }
+    .hint-s { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+    .char-count { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 4px; }
+
+    .logo-drop {
+      border: 1.5px dashed var(--border); border-radius: 12px; padding: 18px; text-align: center; cursor: pointer;
+      transition: border-color .18s ease, background-color .18s ease;
+    }
+    .logo-drop:hover { border-color: var(--accent); background: var(--surface-alt); }
+    .logo-drop svg { width: 22px; height: 22px; color: var(--text-muted); margin: 0 auto 7px; }
+    .logo-chip { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; background: var(--surface-alt);
+                 display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
+
+    /* review rows */
+    .rv { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; font-size: 13px; border-bottom: 1px solid var(--border); }
+    .rv:last-of-type { border-bottom: none; }
+    .rv .k { color: var(--text-muted); }
+    .rv .v { font-weight: 600; text-align: right; word-break: break-word; }
+
+    /* ================= PAYMENT ================= */
+    .pm { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1.5px solid var(--border);
+          border-radius: 12px; padding: 13px 15px; cursor: pointer; margin-bottom: 10px;
+          transition: border-color .18s, background-color .18s, transform .18s; }
+    .pm:hover { border-color: var(--text-muted); transform: translateY(-1px); }
+    .pm.selected { border-color: var(--success); background: var(--success-bg); }
+    .pm-left { display: flex; align-items: center; gap: 11px; font-weight: 700; font-size: 13px; }
+    .pm-logo { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+               font-size: 13px; font-weight: 800; background: var(--surface-alt); flex-shrink: 0; }
+    .pm.selected .pm-logo { background: rgba(255,255,255,.8); }
+    .pm-radio { width: 19px; height: 19px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0;
+                display: flex; align-items: center; justify-content: center; transition: all .18s; }
+    .pm.selected .pm-radio { background: var(--success); border-color: var(--success); color: #fff; }
+    .pm-radio svg { display: none; width: 11px; height: 11px; }
+    .pm.selected .pm-radio svg { display: block; }
+
+    /* ================= ACCOUNT / NOTICE ================= */
+    .acct-box { border: 1.5px solid var(--border); border-radius: 12px; padding: 15px 16px; margin-top: 14px; background: var(--surface-alt); }
+    .acct-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .acct-lbl { font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 4px; }
+    .acct-num { font-size: 19px; font-weight: 800; letter-spacing: -.3px; }
+    .acct-div { height: 1px; background: var(--border); margin: 13px 0; }
+
+    .notice { display: flex; gap: 10px; background: var(--info-bg); border-radius: 11px; padding: 13px 14px; margin-top: 14px; font-size: 12px; color: var(--text-muted); }
+    .notice svg { flex-shrink: 0; color: var(--info); margin-top: 1px; }
+    .notice b { display: block; color: var(--info); font-size: 12.5px; margin-bottom: 5px; }
+    .notice ul { padding-left: 15px; list-style: disc; line-height: 1.8; }
+
+    .status-strip { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+                    background: var(--warning-bg); border-radius: 11px; padding: 11px 14px; margin-bottom: 14px; }
+
+    /* ================= CONFIRMATION ================= */
+    .confirm-hero { text-align: center; padding: 8px 0 18px; }
+    .confirm-icon { width: 78px; height: 78px; border-radius: 50%; background: var(--success-bg); color: var(--success);
+                    display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; animation: popIn .45s cubic-bezier(.2,1.3,.4,1); }
+    @keyframes popIn { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .confirm-title { font-size: 19px; font-weight: 800; margin-bottom: 5px; }
+    .confirm-text { font-size: 12.5px; color: var(--text-muted); max-width: 340px; margin: 0 auto; line-height: 1.6; }
+
+    /* ================= SUMMARY ================= */
+    .summary { position: sticky; top: 82px; }
+    .sum-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; font-size: 13px; }
+    .sum-row .k { color: var(--text-muted); }
+    .sum-row .v { font-weight: 600; text-align: right; }
+    .sum-div { height: 1px; background: var(--border); margin: 8px 0; }
+    .sum-total {
+      background: var(--accent); color: var(--accent-text); border-radius: 12px; padding: 15px 17px;
+      display: flex; justify-content: space-between; align-items: center; margin-top: 14px;
+    }
+    .sum-total .k { font-size: 12.5px; opacity: .75; }
+    .sum-total .v { font-size: 22px; font-weight: 800; letter-spacing: -.5px; }
+    .trust { display: flex; gap: 10px; padding: 13px 0 0; margin-top: 13px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+    .trust svg { flex-shrink: 0; }
+    .trust b { color: var(--text); display: block; margin-bottom: 2px; font-size: 12.5px; }
+  </style>
+</head>
+<body data-page="browse">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content" data-skeleton="off">
+        <div class="breadcrumb">
+          <a href="dashboard.html">Dashboard</a> &gt; <span class="current">Scrim Details</span>
+        </div>
+
+        <!-- ============ HERO ============ -->
+        <div class="hero" id="heroBox">
+          <div class="hero-bg"><img id="heroImg" src="https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=1400&h=600&fit=crop" alt=""></div>
+          <div class="hero-inner">
+            <div class="hero-top">
+              <span class="live-pill" id="statusPill"><span class="live-dot"></span> <span id="statusText">Loading…</span></span>
+              <button class="btn-glass" id="shareBtn">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 3.9M15.4 6.6L8.6 10.5"/></svg>
+                Share
+              </button>
+            </div>
+
+            <h1 id="scrimTitle">Loading…</h1>
+
+            <div class="hero-chips" id="scrimChips"></div>
+
+            <p class="tag" id="scrimDesc"></p>
+
+            <div class="hero-hosted">
+              <div><span class="k">Hosted By</span><span class="v"><span class="av">∞</span> Infinity Scrims <span style="color:#60a5fa;">✓</span></span></div>
+              <div><span class="k">Host</span><span class="v" id="scrimHost"><span class="av">A</span> —</span></div>
+            </div>
+
+            <div class="hero-stats" id="heroStats"></div>
+          </div>
+        </div>
+
+        <!-- ============ ROOM ID (only shows once your booking is confirmed) ============ -->
+        <div class="card" id="roomBox" style="display:none; margin-bottom:20px; border-color:var(--success);">
+          <div class="card-title" style="color:var(--success);">🔑 Room ID &amp; Password</div>
+          <div class="rv"><span class="k">Room ID</span><span class="v" id="roomIdVal">—</span></div>
+          <div class="rv"><span class="k">Password</span><span class="v" id="roomPwVal">—</span></div>
+        </div>
+
+        <!-- ============ CHECKOUT ============ -->
+        <div class="checkout">
+          <div class="flow">
+            <div class="flow-step current" id="step1" data-step="1">
+              <div class="flow-node">1</div>
+              <div class="flow-head">
+                <div>
+                  <div class="ft">Book a Slot</div>
+                  <div class="fs">Pick your team and an available slot</div>
+                </div>
+                <span class="flow-badge now" data-badge>In progress</span>
+              </div>
+
+              <div class="flow-body">
+                <div class="panel" id="noTeamNotice" style="display:none; text-align:center;">
+                  <div style="font-size:34px; margin-bottom:8px;">🧩</div>
+                  <div style="font-weight:700; margin-bottom:6px;">You need a team to book</div>
+                  <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Only a team captain can book slots. Create a team first, or ask your captain to book.</p>
+                  <a href="my-teams.html" class="btn">Go to My Teams</a>
+                </div>
+
+                <div class="panel" id="alreadyBookedNotice" style="display:none; text-align:center;">
+                  <div style="font-size:34px; margin-bottom:8px;">✅</div>
+                  <div style="font-weight:700; margin-bottom:6px;" id="abTitle">Your team already has a slot</div>
+                  <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;" id="abDesc"></p>
+                  <a href="my-bookings.html" class="btn">View Booking</a>
+                </div>
+
+                <div class="panel" id="bookingPanel" style="display:none;">
+                  <div class="field">
+                    <label>Booking as team</label>
+                    <select id="teamSelect"></select>
+                  </div>
+                  <div id="teamContactPreview" style="display:none; background:var(--surface-alt); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:16px; gap:12px; align-items:center;"></div>
+
+                  <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:16px;">
+                    Your slot number is assigned automatically — Infinity Scrims will pick the next open one for your team.
+                  </div>
+
+                  <button class="btn btn-block" id="bookBtn">Book This Slot</button>
+                </div>
+
+                <div class="panel" id="loadingPanel">
+                  <div class="skeleton" style="height:120px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ SUMMARY ============ -->
+          <div class="summary">
+            <div class="card">
+              <div class="card-title">Booking Summary</div>
+              <div class="sum-row"><span class="k">Scrim</span><span class="v" id="sumTitle">—</span></div>
+              <div class="sum-row"><span class="k">Date &amp; Time</span><span class="v" id="sumDate">—</span></div>
+              <div class="sum-row"><span class="k">Game Mode</span><span class="v" id="sumMode">—</span></div>
+              <div class="sum-row"><span class="k">Map</span><span class="v" id="sumMap">—</span></div>
+              <div class="sum-div"></div>
+              <div class="sum-row"><span class="k">Price Per Slot</span><span class="v" id="sumPrice">—</span></div>
+
+              <div class="sum-total">
+                <span class="k">Total Amount</span>
+                <span class="v" id="sumTotal">—</span>
+              </div>
+
+              <div class="trust">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                <div><b>Secure Booking</b>Your payment and data are protected.</div>
+              </div>
+              <div class="trust">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--info)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5l3 2"/></svg>
+                <div><b>15-minute hold</b>Your slot is held for 15 minutes once booked — complete payment before it expires.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+
+  <div id="support-widget-mount"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/demo-seed.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/support-widget.js"></script>
+  <script>
+    const scrimId = new URLSearchParams(location.search).get('id');
+    let scrimData = null;
+    let myTeams = [];
+
+    if (!scrimId) {
+      document.getElementById('scrimTitle').textContent = 'No scrim selected';
+      document.getElementById('loadingPanel').innerHTML = `<div class="empty-state">Missing scrim ID — go back to your Dashboard and pick a scrim.</div>`;
+    } else {
+      init();
+    }
+
+    async function init() {
+      try {
+        const [detail, teamsData] = await Promise.all([
+          Api.get('/scrims/detail.php?id=' + encodeURIComponent(scrimId)),
+          Api.get('/teams/my.php').catch(() => ({ teams: [] })),
+        ]);
+        scrimData = detail.scrim;
+        myTeams = (teamsData.teams || []).filter(t => t.my_role === 'captain');
+        paintHero(detail);
+        paintSummary(detail);
+        paintRoom(detail.scrim);
+        paintBookingPanel(detail);
+      } catch (err) {
+        document.getElementById('loadingPanel').innerHTML = `<div class="empty-state">${escapeHtml(err.message || 'Could not load this scrim.')}</div>`;
+      }
+    }
+
+    function fmtDate(dt) {
+      const d = new Date(dt.replace(' ', 'T'));
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', '
+        + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    }
+
+    function paintHero(detail) {
+      const s = detail.scrim;
+      if (s.banner) document.getElementById('heroImg').src = s.banner;
+      document.getElementById('scrimTitle').textContent = s.title;
+      document.getElementById('scrimDesc').textContent = s.description || '';
+      document.getElementById('scrimHost').innerHTML = `<span class="av">${escapeHtml((s.host || '?')[0].toUpperCase())}</span> ${escapeHtml(s.host)}`;
+
+      const statusMap = {
+        open: { text: 'Registration Open', dot: true },
+        full: { text: 'Slots Full', dot: false },
+        live: { text: 'Live Now', dot: true },
+        completed: { text: 'Completed', dot: false },
+        cancelled: { text: 'Cancelled', dot: false },
+      };
+      const st = statusMap[s.status] || { text: s.status, dot: false };
+      document.getElementById('statusText').textContent = st.text;
+      if (!st.dot) document.querySelector('#statusPill .live-dot').style.display = 'none';
+
+      document.getElementById('scrimChips').innerHTML = `
+        ${s.mode ? `<span class="chip-g">🎮 ${escapeHtml(s.mode)}</span>` : ''}
+        ${s.map ? `<span class="chip-g">🗺️ ${escapeHtml(s.map)}</span>` : ''}
+        <span class="chip-g">📅 ${fmtDate(s.match_at)}</span>
+        ${s.region ? `<span class="chip-g">🌏 ${escapeHtml(s.region)}</span>` : ''}
+      `;
+
+      document.getElementById('heroStats').innerHTML = `
+        <div class="hero-stat"><div class="lbl">Price Per Slot</div><div class="val">${money(s.price_per_slot)}</div></div>
+        <div class="hero-stat"><div class="lbl">Total Slots</div><div class="val">${s.total_slots}</div></div>
+        <div class="hero-stat"><div class="lbl">Booked</div><div class="val">${s.booked_slots}</div></div>
+        <div class="hero-stat"><div class="lbl">Remaining</div><div class="val green">${s.remaining}</div></div>
+      `;
+    }
+
+    function paintSummary(detail) {
+      const s = detail.scrim;
+      document.getElementById('sumTitle').textContent = s.title;
+      document.getElementById('sumDate').textContent = fmtDate(s.match_at);
+      document.getElementById('sumMode').textContent = s.mode || '-';
+      document.getElementById('sumMap').textContent = s.map || '-';
+      document.getElementById('sumPrice').textContent = money(s.price_per_slot);
+      document.getElementById('sumTotal').textContent = money(s.total_amount);
+    }
+
+    function paintRoom(s) {
+      if (s.room_id) {
+        document.getElementById('roomBox').style.display = 'block';
+        document.getElementById('roomIdVal').textContent = s.room_id;
+        document.getElementById('roomPwVal').textContent = s.room_password || '-';
+      }
+    }
+
+    function paintTeamContactPreview() {
+      const teamId = Number(document.getElementById('teamSelect').value);
+      const t = myTeams.find(x => x.id === teamId);
+      const box = document.getElementById('teamContactPreview');
+      if (!t) { box.style.display = 'none'; return; }
+      box.style.display = 'flex';
+      const logo = t.logo_url
+        ? `<img src="${t.logo_url}" style="width:40px;height:40px;border-radius:10px;object-fit:cover;flex-shrink:0;">`
+        : `<div style="width:40px;height:40px;border-radius:10px;background:#0b0b0c;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;">${escapeHtml((t.name || '?').trim().split(/\s+/).slice(0,2).map(w=>w[0].toUpperCase()).join(''))}</div>`;
+      const contactBits = [
+        t.phone ? `📞 ${escapeHtml(t.phone)}` : null,
+        t.whatsapp ? `💬 ${escapeHtml(t.whatsapp)}` : null,
+        t.discord_id ? `🎮 ${escapeHtml(t.discord_id)}` : null,
+      ].filter(Boolean);
+      box.innerHTML = `
+        ${logo}
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:700; font-size:13px;">${escapeHtml(t.name)}</div>
+          ${contactBits.length
+            ? `<div style="font-size:11px; color:var(--text-muted); margin-top:2px;">${contactBits.join(' &nbsp;·&nbsp; ')}</div>`
+            : `<div style="font-size:11px; color:var(--text-muted); margin-top:2px;">No contact info saved — <a href="my-teams.html">add it in My Teams</a> so the admin can reach you.</div>`}
+        </div>
+      `;
+    }
+
+    function paintBookingPanel(detail) {
+      document.getElementById('loadingPanel').style.display = 'none';
+
+      // Team-membership-based check — this fires for EVERY member of the team
+      // that booked (not just the captain who clicked "Book"), since the
+      // backend now checks team_members, not just who submitted the booking.
+      const mtb = detail.scrim.my_team_booking;
+      if (mtb) {
+        document.getElementById('alreadyBookedNotice').style.display = 'block';
+        document.getElementById('abTitle').textContent =
+          mtb.status === 'confirmed' ? `${mtb.team_name} is confirmed for Slot #${mtb.slot_number}` : `${mtb.team_name} already booked Slot #${mtb.slot_number}`;
+        document.getElementById('abDesc').textContent =
+          mtb.status === 'confirmed' ? 'Payment verified — you\'re in!' : 'Payment is awaiting owner approval.';
+        return;
+      }
+
+      if (!myTeams.length) {
+        document.getElementById('noTeamNotice').style.display = 'block';
+        return;
+      }
+
+      document.getElementById('bookingPanel').style.display = 'block';
+      document.getElementById('teamSelect').innerHTML = myTeams.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+      document.getElementById('teamSelect').addEventListener('change', paintTeamContactPreview);
+      paintTeamContactPreview();
+
+      const bookBtn = document.getElementById('bookBtn');
+      if (detail.scrim.status !== 'open' || detail.scrim.remaining <= 0) {
+        bookBtn.disabled = true;
+        bookBtn.textContent = detail.scrim.status !== 'open' ? 'Booking Closed' : 'Scrim Full';
+      }
+    }
+
+    document.getElementById('bookBtn').addEventListener('click', async () => {
+      const teamId = document.getElementById('teamSelect').value;
+      const btn = document.getElementById('bookBtn');
+      const original = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Booking...';
+      try {
+        const data = await Api.post('/bookings/create.php', {
+          scrim_id: scrimId,
+          team_id: teamId,
+        });
+        toast(`Slot #${data.slot_number} held! Complete payment within ${Math.floor(data.expires_in / 60)} minutes.`, 'success');
+        window.location.href = 'payment.html?booking_id=' + data.booking_id;
+      } catch (err) {
+        toast(err.message || 'Could not book a slot.', 'error');
+        btn.disabled = false; btn.textContent = original;
+      }
+    });
+
+    document.getElementById('shareBtn').addEventListener('click', () => {
+      navigator.clipboard?.writeText(window.location.href);
+      toast('Link copied to clipboard.', 'success');
+    });
+  </script>
+</body>
+</html>

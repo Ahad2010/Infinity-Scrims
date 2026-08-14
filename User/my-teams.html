@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Teams — Infinity Scrims</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.webp">
+  <style>
+    .team-card { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
+    .join-code-box {
+      flex: 1; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 14px; font-weight: 700; letter-spacing: 2px; text-align: center; font-size: 14px;
+    }
+    .roster-row {
+      display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border);
+    }
+    .roster-row:last-child { border-bottom: none; }
+    .roster-row .name { font-weight: 600; font-size: 13.5px; }
+    .roster-row .meta { font-size: 11.5px; color: var(--text-muted); }
+    .team-detail { display: none; margin-top: 12px; border-top: 1px solid var(--border); padding-top: 14px; }
+    .team-detail.open { display: block; animation: fadeUp .2s ease; }
+
+    /* ---------- Chat tab ---------- */
+    .chat-shell { display: grid; grid-template-columns: 260px 1fr; gap: 0; height: 560px; overflow: hidden; }
+    @media (max-width: 768px) { .chat-shell { grid-template-columns: 1fr; height: auto; } }
+    .chat-rooms-list { border-right: 1px solid var(--border); overflow-y: auto; }
+    @media (max-width: 768px) { .chat-rooms-list { border-right: none; border-bottom: 1px solid var(--border); max-height: 220px; } }
+    .chat-room-item {
+      display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer;
+      border-bottom: 1px solid var(--border); transition: background-color .15s;
+    }
+    .chat-room-item:hover { background: var(--surface-alt); }
+    .chat-room-item.active { background: var(--surface-alt); }
+    .chat-room-avatar {
+      width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: var(--accent-text);
+      display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;
+    }
+    .chat-room-item .rname { font-weight: 600; font-size: 13px; }
+    .chat-room-item .rlast { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+    .chat-pane { display: flex; flex-direction: column; height: 100%; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .chat-bubble-row { display: flex; gap: 8px; align-items: flex-end; }
+    .chat-bubble-row.mine { flex-direction: row-reverse; }
+    .chat-bubble-avatar {
+      width: 26px; height: 26px; border-radius: 50%; background: var(--surface-alt); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0;
+    }
+    .chat-bubble { max-width: 70%; }
+    .chat-bubble .who { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+    .chat-bubble .text {
+      background: var(--surface-alt); border: 1px solid var(--border); border-radius: 14px 14px 14px 4px;
+      padding: 8px 12px; font-size: 13.5px; line-height: 1.4;
+    }
+    .chat-bubble-row.mine .text { background: var(--accent); color: var(--accent-text); border-radius: 14px 14px 4px 14px; border-color: transparent; }
+    .chat-bubble .time { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .chat-bubble-row.mine .time { text-align: right; }
+    .chat-system-msg { text-align: center; font-size: 11.5px; color: var(--text-muted); background: var(--surface-alt); border-radius: 99px; padding: 4px 12px; align-self: center; }
+    .chat-input-row { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--border); }
+    .chat-input-row input { flex: 1; }
+    .chat-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px; }
+  </style>
+</head>
+<body data-page="my-teams">
+  <!-- Remove member confirm modal -->
+  <div class="modal-overlay" id="removeMemberModal">
+    <div class="modal">
+      <h3>Remove teammate?</h3>
+      <p id="removeMemberMsg">Are you sure you want to remove this member from the team?</p>
+      <div class="modal-actions">
+        <button class="btn btn-outline btn-block" onclick="closeModal('removeMemberModal')">Cancel</button>
+        <button class="btn btn-danger btn-block" id="removeMemberConfirmBtn">Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content">
+        <div class="breadcrumb"><a href="dashboard.html">Dashboard</a> &gt; <span class="current">My Teams</span></div>
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+          <div>
+            <h1 class="page-title">My Teams</h1>
+            <p class="page-sub">Create, manage, and chat with your teams.</p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <a href="join-team.html" class="btn btn-outline">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+              Join Team
+            </a>
+            <a href="create-team.html" class="btn">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              Create Team
+            </a>
+          </div>
+        </div>
+
+        <div id="teamActionBanner"></div>
+
+        <div class="stat-grid" id="teamStatGrid" style="grid-template-columns:repeat(3,1fr);"></div>
+
+        <div class="tabs" id="myTeamsTabs">
+          <button class="active" data-tab="teams">My Teams</button>
+          <button data-tab="chat">Team Chat</button>
+        </div>
+
+        <div class="tab-panel active" id="panel-teams">
+          <div id="teamsList" style="display:flex; flex-direction:column; gap:16px;"></div>
+        </div>
+
+        <div class="tab-panel" id="panel-chat" style="display:none;">
+          <div class="card" style="padding:0;">
+            <div class="chat-shell">
+              <div class="chat-rooms-list" id="chatRoomsList"></div>
+              <div class="chat-pane" id="chatPane">
+                <div class="chat-empty">Pick a team or scrim group on the left to start chatting.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+
+  <div id="support-widget-mount"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/demo-seed.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/support-widget.js"></script>
+  <script>
+    // =================================================================
+    // Modal helpers — only the Remove Member confirm dialog uses these now.
+    // Create/Edit/Join Team moved to their own pages (create-team.html,
+    // edit-team.html, join-team.html).
+    // =================================================================
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    document.querySelectorAll('.modal-overlay').forEach(ov => {
+      ov.addEventListener('click', (e) => { if (e.target === ov) ov.classList.remove('open'); });
+    });
+
+    // ---------------- Post-redirect success banners ----------------
+    (function showActionBanner() {
+      const params = new URLSearchParams(window.location.search);
+      const banner = document.getElementById('teamActionBanner');
+      let html = '';
+      if (params.has('created')) {
+        const code = params.get('created');
+        html = `
+          <div class="card" style="margin-bottom:20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:200px;">
+              <div style="font-weight:700; margin-bottom:4px;">Team created!</div>
+              <div style="font-size:12.5px; color:var(--text-muted);">Share this join code with your teammates:</div>
+            </div>
+            <div class="join-code-box" style="flex:0;">${code}</div>
+            <button class="btn btn-outline btn-sm" id="bannerCopyBtn">Copy</button>
+          </div>`;
+      } else if (params.has('updated')) {
+        html = `<div class="card" style="margin-bottom:20px; color:var(--success); font-weight:600; font-size:13px;">Team updated successfully.</div>`;
+      } else if (params.has('joined')) {
+        html = `<div class="card" style="margin-bottom:20px; color:var(--success); font-weight:600; font-size:13px;">You've joined the team!</div>`;
+      }
+      if (html) {
+        banner.innerHTML = html;
+        document.getElementById('bannerCopyBtn')?.addEventListener('click', () => copyText(params.get('created'), document.getElementById('bannerCopyBtn')));
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    })();
+
+    // =================================================================
+    // Tabs (My Teams / Team Chat)
+    // =================================================================
+    document.querySelectorAll('#myTeamsTabs button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#myTeamsTabs button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+        const panel = document.getElementById('panel-' + btn.dataset.tab);
+        panel.style.display = 'block';
+        panel.classList.add('active');
+        if (btn.dataset.tab === 'chat' && !chatRoomsLoaded) loadChatRooms();
+      });
+    });
+
+    // =================================================================
+    // MY TEAMS — GET /teams/my.php
+    // =================================================================
+    let myTeams = [];
+
+    function initials(name) {
+      return (name || '?').trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join('');
+    }
+
+    function teamLogoBg(id) {
+      const palette = ['#0c0d10', '#7c3aed', '#db2777', '#0891b2', '#ea580c', '#16a34a'];
+      return palette[id % palette.length];
+    }
+
+    async function loadTeams() {
+      document.getElementById('teamsList').innerHTML = skeleton(2);
+      try {
+        const data = await Api.get('/teams/my.php');
+        myTeams = data.teams || [];
+        paintStats();
+        paintTeams();
+      } catch (err) {
+        document.getElementById('teamsList').innerHTML = `<div class="empty-state">Could not load your teams. ${escapeHtml(err.message || '')}</div>`;
+      }
+    }
+
+    function paintStats() {
+      const totalPlayers = myTeams.reduce((sum, t) => sum + Number(t.member_count || 0), 0);
+      const captainOf = myTeams.filter(t => t.my_role === 'captain').length;
+      document.getElementById('teamStatGrid').innerHTML = `
+        <div class="card stat-card">
+          <div class="icon icon-blue"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="18" cy="8" r="3"/><path d="M22 21v-1a3 3 0 0 0-2-2.8"/></svg></div>
+          <div class="label">Total Teams</div><div class="value">${myTeams.length}</div>
+        </div>
+        <div class="card stat-card">
+          <div class="icon icon-purple"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/></svg></div>
+          <div class="label">Teams You Captain</div><div class="value">${captainOf}</div>
+        </div>
+        <div class="card stat-card">
+          <div class="icon icon-green"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div class="label">Total Players</div><div class="value">${totalPlayers}</div>
+        </div>
+      `;
+    }
+
+    function paintTeams() {
+      const list = document.getElementById('teamsList');
+      if (!myTeams.length) {
+        list.innerHTML = `
+          <div class="card" style="text-align:center; padding:40px 20px;">
+            <div style="font-size:38px; margin-bottom:10px;">🎮</div>
+            <h4 style="margin-bottom:6px;">No teams yet</h4>
+            <p style="color:var(--text-muted); font-size:13px; margin-bottom:16px;">Create a team to start booking scrim slots, or join one with a code from a teammate.</p>
+            <div style="display:flex; gap:8px; justify-content:center;">
+              <a href="join-team.html" class="btn btn-outline">Join Team</a>
+              <a href="create-team.html" class="btn">Create Team</a>
+            </div>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = myTeams.map(t => `
+        <div class="card">
+          <div class="team-card">
+            ${t.logo_url
+              ? `<img class="team-logo" src="${t.logo_url}" style="object-fit:cover;" alt="">`
+              : `<div class="team-logo" style="background:${teamLogoBg(t.id)};">${escapeHtml(initials(t.name))}</div>`}
+            <div style="flex:1; min-width:220px;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
+                <h4 style="font-size:16px;">${escapeHtml(t.name)}</h4>
+                ${t.tag ? `<span class="badge badge-muted">${escapeHtml(t.tag)}</span>` : ''}
+                <span class="badge ${t.my_role === 'captain' ? 'badge-success' : 'badge-info'}">${t.my_role === 'captain' ? 'Captain' : 'Member'}</span>
+              </div>
+              <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">${t.member_count} member${t.member_count == 1 ? '' : 's'} · Created ${new Date(t.created_at.replace(' ', 'T')).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+              ${(t.phone || t.whatsapp || t.discord_id) ? `
+                <div style="display:flex; gap:12px; flex-wrap:wrap; font-size:11.5px; color:var(--text-muted); margin-bottom:8px;">
+                  ${t.phone ? `<span>📞 ${escapeHtml(t.phone)}</span>` : ''}
+                  ${t.whatsapp ? `<span>💬 ${escapeHtml(t.whatsapp)}</span>` : ''}
+                  ${t.discord_id ? `<span>🎮 ${escapeHtml(t.discord_id)}</span>` : ''}
+                </div>` : ''}
+              <div class="avatar-stack">
+                ${t.members.slice(0, 6).map(m => `<div class="avatar-sm" title="${escapeHtml(m.username)}">${escapeHtml(initials(m.username))}</div>`).join('')}
+                ${t.members.length > 6 ? `<div class="avatar-sm">+${t.members.length - 6}</div>` : ''}
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <button class="btn btn-outline btn-sm" onclick="toggleTeamDetail(${t.id})">
+                <span id="detailBtnLabel-${t.id}">View Roster</span>
+              </button>
+              ${t.my_role === 'captain' ? `<a href="edit-team.html?id=${t.id}" class="btn btn-outline btn-sm">Edit Team</a>` : ''}
+            </div>
+          </div>
+
+          <div class="team-detail" id="teamDetail-${t.id}">
+            ${t.my_role === 'captain' ? `
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+                <div style="font-size:12px; color:var(--text-muted); white-space:nowrap;">Join code:</div>
+                <div class="join-code-box" style="flex:0; padding:6px 14px;">${escapeHtml(t.join_code || '')}</div>
+                <button class="btn btn-outline btn-sm" onclick="copyText('${escapeHtml(t.join_code || '')}', this)">Copy</button>
+              </div>
+            ` : ''}
+            <div class="section-title" style="margin-bottom:8px;">Roster</div>
+            ${t.members.map(m => `
+              <div class="roster-row">
+                <div class="avatar-sm">${escapeHtml(initials(m.username))}</div>
+                <div style="flex:1;">
+                  <div class="name">${escapeHtml(m.username)} ${m.role === 'captain' ? '<span class="badge badge-success" style="margin-left:6px;">Captain</span>' : ''}</div>
+                  <div class="meta">${m.in_game_name ? escapeHtml(m.in_game_name) : 'No in-game name set'}${m.in_game_id ? ' · ID: ' + escapeHtml(m.in_game_id) : ''}</div>
+                </div>
+                ${(t.my_role === 'captain' && m.role !== 'captain') ? `
+                  <button class="btn btn-outline btn-sm" onclick="confirmRemoveMember(${t.id}, ${m.id}, '${escapeHtml(m.username)}')">Remove</button>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleTeamDetail(teamId) {
+      const el = document.getElementById('teamDetail-' + teamId);
+      const label = document.getElementById('detailBtnLabel-' + teamId);
+      const isOpen = el.classList.toggle('open');
+      label.textContent = isOpen ? 'Hide Roster' : 'View Roster';
+    }
+
+    function copyText(text, btn) {
+      navigator.clipboard?.writeText(text).then(() => {
+        const original = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => (btn.textContent = original), 1500);
+      });
+    }
+
+    // ---------------- Remove member ----------------
+    let pendingRemove = null;
+    function confirmRemoveMember(teamId, userId, username) {
+      pendingRemove = { teamId, userId };
+      document.getElementById('removeMemberMsg').textContent = `Remove ${username} from the team? They'll need a new join code to come back.`;
+      openModal('removeMemberModal');
+    }
+    document.getElementById('removeMemberConfirmBtn').addEventListener('click', async () => {
+      if (!pendingRemove) return;
+      const btn = document.getElementById('removeMemberConfirmBtn');
+      btn.disabled = true; btn.textContent = 'Removing...';
+      try {
+        await Api.post('/teams/remove_member.php', { team_id: pendingRemove.teamId, user_id: pendingRemove.userId });
+        closeModal('removeMemberModal');
+        toast('Member removed.', 'success');
+        loadTeams();
+      } catch (err) {
+        toast(err.message || 'Could not remove member.', 'error');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Remove';
+        pendingRemove = null;
+      }
+    });
+
+    loadTeams();
+
+    // =================================================================
+    // TEAM CHAT — /chat/rooms.php, /chat/fetch.php, /chat/send.php
+    // =================================================================
+    let chatRoomsLoaded = false;
+    let activeRoomId = null;
+    let chatPollTimer = null;
+    let lastMsgId = 0;
+
+    async function loadChatRooms() {
+      chatRoomsLoaded = true;
+      const list = document.getElementById('chatRoomsList');
+      list.innerHTML = skeleton(3);
+      try {
+        const data = await Api.get('/chat/rooms.php');
+        const rooms = data.rooms || [];
+        if (!rooms.length) {
+          list.innerHTML = `<div class="empty-state" style="padding:24px 14px; font-size:12.5px;">No chat rooms yet — create/join a team, or get a confirmed booking, to unlock group chat.</div>`;
+          return;
+        }
+        list.innerHTML = rooms.map(r => `
+          <div class="chat-room-item" data-room-id="${r.id}" onclick="openChatRoom(${r.id}, '${escapeHtml(r.name).replace(/'/g, "\\'")}')">
+            <div class="chat-room-avatar">${r.type === 'team' ? '👥' : '🎮'}</div>
+            <div style="flex:1; min-width:0;">
+              <div class="rname">${escapeHtml(r.name)}</div>
+              <div class="rlast">${r.last_message ? escapeHtml(r.last_message) : 'No messages yet'}</div>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        list.innerHTML = `<div class="empty-state" style="padding:24px 14px; font-size:12.5px;">${escapeHtml(err.message || 'Could not load chats.')}</div>`;
+      }
+    }
+
+    function openChatRoom(roomId, roomName) {
+      activeRoomId = roomId;
+      lastMsgId = 0;
+      document.querySelectorAll('.chat-room-item').forEach(el => el.classList.toggle('active', Number(el.dataset.roomId) === roomId));
+
+      const pane = document.getElementById('chatPane');
+      pane.innerHTML = `
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-row">
+          <input type="text" id="chatInput" placeholder="Message ${escapeHtml(roomName)}..." maxlength="1000">
+          <button class="btn" id="chatSendBtn">Send</button>
+        </div>
+      `;
+      document.getElementById('chatSendBtn').addEventListener('click', sendChatMessage);
+      document.getElementById('chatInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendChatMessage();
+      });
+
+      fetchChatMessages(true);
+      if (chatPollTimer) clearInterval(chatPollTimer);
+      chatPollTimer = setInterval(() => fetchChatMessages(false), 3000);
+    }
+
+    async function fetchChatMessages(scrollToBottom) {
+      if (!activeRoomId) return;
+      try {
+        const data = await Api.get(`/chat/fetch.php?room_id=${activeRoomId}&after=${lastMsgId}`);
+        const msgs = data.messages || [];
+        if (!msgs.length) return;
+        const container = document.getElementById('chatMessages');
+        if (!container) return;
+        msgs.forEach(m => {
+          const row = document.createElement('div');
+          if (m.is_system) {
+            row.className = 'chat-system-msg';
+            row.textContent = m.message;
+          } else {
+            row.className = 'chat-bubble-row' + (m.is_mine ? ' mine' : '');
+            row.innerHTML = `
+              <div class="chat-bubble-avatar">${escapeHtml(initials(m.username))}</div>
+              <div class="chat-bubble">
+                ${!m.is_mine ? `<div class="who">${escapeHtml(m.username)}</div>` : ''}
+                <div class="text">${escapeHtml(m.message)}</div>
+                <div class="time">${escapeHtml(m.time)}</div>
+              </div>
+            `;
+          }
+          container.appendChild(row);
+        });
+        lastMsgId = data.last_id || lastMsgId;
+        if (scrollToBottom) container.scrollTop = container.scrollHeight;
+        else {
+          const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+          if (nearBottom) container.scrollTop = container.scrollHeight;
+        }
+      } catch (err) {
+        // Silent — polling shouldn't spam toasts on transient errors
+      }
+    }
+
+    async function sendChatMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text || !activeRoomId) return;
+      input.value = '';
+      try {
+        await Api.post('/chat/send.php', { room_id: activeRoomId, message: text });
+        fetchChatMessages(true);
+      } catch (err) {
+        toast(err.message || 'Message could not be sent.', 'error');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "backend/api/**/*.php", "use": "vercel-php@0.7.3" },
+    { "src": "User/**", "use": "@vercel/static" },
+    { "src": "Owner/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/backend/api/$1" },
+    { "src": "/Owner/assets/(.*)", "dest": "/Owner/assets/$1" },
+    { "src": "/Owner/partials/(.*)", "dest": "/Owner/partials/$1" },
+    { "src": "/Owner/([a-zA-Z0-9_-]+)$", "dest": "/Owner/$1.html" },
+    { "src": "/Owner$", "dest": "/Owner/index.html" },
+    { "src": "/Owner/$", "dest": "/Owner/index.html" },
+    { "src": "/assets/(.*)", "dest": "/User/assets/$1" },
+    { "src": "/partials/(.*)", "dest": "/User/partials/$1" },
+    { "src": "/favicon.ico", "dest": "/User/favicon.ico" },
+    { "src": "/([a-zA-Z0-9_-]+)$", "dest": "/User/$1.html" },
+    { "src": "/", "dest": "/User/index.html" },
+    { "src": "/(.*)", "dest": "/User/$1" }
+  ],
+  "crons": [
+    { "path": "/api/cron-cleanup.php", "schedule": "*/5 * * * *" }
+  ]
+}

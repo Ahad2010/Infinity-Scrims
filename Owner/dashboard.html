@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Infinity Scrims Owner</title>
+ <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+</head>
+<body data-page="dashboard">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content" data-skeleton="off">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+          <div>
+            <h1 class="page-title" id="welcomeTitle">Welcome back! 👋</h1>
+            <p class="page-sub">Here's what's happening with your scrims today.</p>
+          </div>
+          <div class="btn btn-outline" style="cursor:default;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <span id="dateLabel"></span>
+          </div>
+        </div>
+
+        <div class="stat-grid" id="statGrid">
+          <div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Upcoming Scrims <a href="scrims.html" style="font-size:12px;font-weight:600;">View All</a></div>
+            <div id="upcomingList"><div class="skeleton skeleton-line"></div></div>
+            <a href="create-scrim.html" class="btn btn-block" style="margin-top:10px;">+ Create New Scrim</a>
+          </div>
+          <div class="card">
+            <div class="card-title">Scrim Status Overview</div>
+            <div id="donutWrap"><div class="skeleton skeleton-card"></div></div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top:20px;">
+          <div class="card">
+            <div class="card-title"><span>Payment Approval Queue <span class="badge badge-warning" id="pendingBadge"></span></span> <a href="payment-approvals.html" style="font-size:12px;font-weight:600;">View All</a></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>User</th><th>Scrim</th><th>Slot</th><th>Time</th><th></th></tr></thead>
+                <tbody id="queueBody"><tr><td colspan="5"><div class="skeleton skeleton-line"></div></td></tr></tbody>
+              </table>
+            </div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:8px;">Auto reject after 15 minutes if not reviewed.</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Recent Activity <a href="notifications.html" style="font-size:12px;font-weight:600;">View All</a></div>
+            <div id="activityList"><div class="skeleton skeleton-line"></div></div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top:20px;">
+          <div class="card">
+            <div class="card-title">Earnings Overview <a href="earnings.html" style="font-size:12px;font-weight:600;">View Full Report</a></div>
+            <div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
+              <div style="min-width:150px;">
+                <div style="font-size:11px; color:var(--text-muted);">Total Earnings</div>
+                <div style="font-size:24px; font-weight:800;" id="totalEarnings">...</div>
+                <div style="font-size:12px; color:var(--success); font-weight:600; margin-bottom:14px; display:none;" id="earningsTrendPct"></div>
+                <div class="dl-row" style="padding:5px 0;"><span class="k">Completed Scrims</span><span class="v" id="earnCompleted">PKR 0</span></div>
+                <div class="dl-row" style="padding:5px 0;"><span class="k">Ongoing Scrims</span><span class="v" id="earnOngoing">PKR 0</span></div>
+                <div class="dl-row" style="padding:5px 0; border-bottom:none;"><span class="k">Pending (Escrow)</span><span class="v" id="earnPending">PKR 0</span></div>
+              </div>
+              <div style="flex:1; min-width:220px;">
+                <div style="display:flex; justify-content:flex-end; margin-bottom:4px;">
+                  <span style="font-size:11px; color:var(--text-muted);">Last 7 Days</span>
+                </div>
+                <svg id="trendSvg" viewBox="0 0 380 160" style="width:100%; height:150px;"></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Recent Scrims <a href="scrims.html" style="font-size:12px;font-weight:600;">View All</a></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Scrim</th><th>Date &amp; Time</th><th>Slots</th><th>Status</th><th>Revenue</th><th></th></tr></thead>
+                <tbody id="recentBody"><tr><td colspan="6"><div class="skeleton skeleton-line"></div></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/owner-common.js"></script>
+  <script>
+  // Only used if the API call genuinely fails (offline backend, network error) —
+  // never silently swapped in when real data is simply empty/zero.
+  const DEMO = {
+    stats: { active_scrims: 12, pending_approvals: 8, revenue_total: 'PKR 45,680', total_scrims: 22 },
+    upcoming_scrims: [
+      { title: 'PUBG Mobile Night Cup', booked: 18, total_slots: 25, match_at: '2025-05-24T20:00:00', status: 'open', meta: 'Erangel' },
+      { title: 'Valorant Pro Scrims', booked: 12, total_slots: 20, match_at: '2025-05-25T18:00:00', status: 'open', meta: 'Bind' },
+    ],
+    status_breakdown: { open: 10, full: 4, completed: 5, cancelled: 3 },
+    total_scrims: 22,
+    pending_queue: [],
+    pending_count: 0,
+    recent_activity: [],
+    earnings_trend: [
+      { date: '18 May', amount: 0 }, { date: '19 May', amount: 0 }, { date: '20 May', amount: 0 },
+      { date: '21 May', amount: 0 }, { date: '22 May', amount: 0 }, { date: '23 May', amount: 0 }, { date: '24 May', amount: 0 },
+    ],
+    earnings_breakdown: { completed: 0, ongoing: 0, pending: 0 },
+    recent_scrims: [],
+    is_demo: true,
+  };
+
+  document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  (async function () {
+    const user = Api.user();
+    document.getElementById('welcomeTitle').textContent = `Welcome back, ${user ? user.username : 'Admin'}! 👋`;
+
+    try {
+      const data = await Api.get('/dashboard.php');
+      const pending = await Api.get('/payments/pending.php?status=pending');
+      paintAll({
+        stats: data.stats,
+        upcoming_scrims: data.upcoming_scrims,
+        status_breakdown: data.status_breakdown,
+        total_scrims: data.total_scrims,
+        pending_queue: pending.payments.slice(0, 5),
+        pending_count: pending.stats.pending,
+        recent_activity: data.recent_activity,
+        earnings_trend: data.earnings_trend,
+        earnings_breakdown: data.earnings_breakdown,
+        recent_scrims: data.recent_scrims,
+      });
+    } catch (err) {
+      paintAll(DEMO);
+    }
+  })();
+
+  function paintAll(d) {
+    const s = d.stats;
+    document.getElementById('statGrid').innerHTML = `
+      <a href="scrims.html" class="card stat-card card-hover" style="text-decoration:none; color:inherit;"><div class="icon">${ICONS.gamepad}</div><div class="label">Active Scrims</div><div class="value">${s.active_scrims}</div><div class="sub">View all scrims →</div></a>
+      <a href="payment-approvals.html" class="card stat-card card-hover" style="text-decoration:none; color:inherit;"><div class="icon">${ICONS.clock}</div><div class="label">Pending Approvals</div><div class="value">${s.pending_approvals}</div><div class="sub">View queue →</div></a>
+      <a href="earnings.html" class="card stat-card card-hover" style="text-decoration:none; color:inherit;"><div class="icon">${ICONS.wallet2}</div><div class="label">Total Revenue</div><div class="value">${typeof s.revenue_total === 'number' ? money(s.revenue_total) : s.revenue_total}</div><div class="sub">View earnings →</div></a>
+      <a href="scrims.html" class="card stat-card card-hover" style="text-decoration:none; color:inherit;"><div class="icon">${ICONS.users2}</div><div class="label">Total Scrims</div><div class="value">${d.total_scrims ?? s.total_scrims ?? 0}</div><div class="sub">View all scrims →</div></a>
+    `;
+
+    document.getElementById('upcomingList').innerHTML = d.upcoming_scrims.length ? d.upcoming_scrims.map(u => `
+      <a href="participants.html?scrim_id=${u.id || ''}" style="display:flex; align-items:center; gap:12px; padding:12px 10px; border-radius:10px; text-decoration:none; color:inherit; transition:background-color .15s;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'">
+        <div class="row-icon badge badge-info" style="width:38px;height:38px;">${ICONS.gamepad}</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:700; font-size:13.5px;">${escapeHtml(u.title)}</div>
+          <div style="font-size:11.5px; color:var(--text-muted);">📅 ${new Date(u.match_at).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})} ${u.meta ? '• ' + escapeHtml(u.meta) : ''}</div>
+        </div>
+        <span style="font-size:12px; font-weight:600; color:var(--text-muted); white-space:nowrap;">${u.booked}/${u.total_slots} Slots</span>
+        <span class="badge ${u.status === 'full' ? 'badge-danger' : 'badge-success'}">${u.status === 'full' ? 'Full' : 'Open'}</span>
+      </a>
+    `).join('') : `<div class="empty-state" style="padding:20px 0;">No scrims in the next 7 days</div>`;
+
+    renderDonut(d.status_breakdown, d.total_scrims);
+
+    document.getElementById('pendingBadge').textContent = d.pending_count + ' Pending';
+    document.getElementById('queueBody').innerHTML = d.pending_queue.length ? d.pending_queue.map(p => `
+      <tr>
+        <td>${escapeHtml(p.username)}</td>
+        <td>${escapeHtml(p.scrim_title)}</td>
+        <td>#${p.slot_number}</td>
+        <td>${p.waiting}</td>
+        <td style="display:flex; gap:4px;">
+          <button class="btn btn-sm" onclick="quickReview(${p.id || 0}, 'approve')">✓</button>
+          <button class="btn btn-sm btn-outline" onclick="quickReview(${p.id || 0}, 'reject')">✕</button>
+        </td>
+      </tr>
+    `).join('') : `<tr><td colspan="5"><div class="empty-state" style="padding:16px 0;">No pending payments</div></td></tr>`;
+
+    document.getElementById('activityList').innerHTML = d.recent_activity.length ? d.recent_activity.map(a => {
+      const ai = activityIcon(a.type);
+      return `<div style="display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--border);">
+        <div class="row-icon badge ${ai.cls}">${ai.icon}</div>
+        <div style="flex:1;"><div style="font-weight:600; font-size:13px;">${escapeHtml(a.title)}</div><div style="font-size:12px; color:var(--text-muted);">${escapeHtml(a.body || '')}</div></div>
+        <div style="font-size:11px; color:var(--text-muted); white-space:nowrap;">${a.ago}</div>
+      </div>`;
+    }).join('') : `<div class="empty-state" style="padding:20px 0;">No recent activity</div>`;
+
+    const total = d.earnings_trend.reduce((sum, t) => sum + Number(t.amount), 0);
+    document.getElementById('totalEarnings').textContent = money(total);
+    document.getElementById('earnCompleted').textContent = money(d.earnings_breakdown.completed);
+    document.getElementById('earnOngoing').textContent = money(d.earnings_breakdown.ongoing);
+    document.getElementById('earnPending').textContent = money(d.earnings_breakdown.pending);
+    renderTrendSvg(d.earnings_trend);
+
+    document.getElementById('recentBody').innerHTML = d.recent_scrims.length ? d.recent_scrims.map(r => `
+      <tr>
+        <td><b>${escapeHtml(r.title)}</b></td>
+        <td style="font-size:12px; color:var(--text-muted);">${new Date(r.match_at).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
+        <td>${r.booked}/${r.total_slots}</td>
+        <td><span class="badge ${r.status === 'open' ? 'badge-success' : r.status === 'full' ? 'badge-danger' : 'badge-muted'}">${r.status}</span></td>
+        <td><b>${r.revenue_txt}</b></td>
+        <td><a href="participants.html?scrim_id=${r.id || ''}" class="btn btn-outline btn-sm" style="padding:4px 8px;">View</a></td>
+      </tr>
+    `).join('') : `<tr><td colspan="6"><div class="empty-state" style="padding:16px 0;">No scrims yet</div></td></tr>`;
+  }
+
+// Shared floating tooltip element, reused by both charts
+  function getTooltip() {
+    let tip = document.getElementById('chartTooltip');
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.id = 'chartTooltip';
+      tip.style.cssText = 'position:fixed; z-index:3000; pointer-events:none; background:var(--sidebar-bg); color:#fff; font-size:12px; padding:8px 11px; border-radius:8px; box-shadow:var(--shadow-lg); display:none; white-space:nowrap;';
+      document.body.appendChild(tip);
+    }
+    return tip;
+  }
+  function showTip(html, x, y) {
+    const tip = getTooltip();
+    tip.innerHTML = html;
+    tip.style.left = (x + 14) + 'px';
+    tip.style.top = (y - 10) + 'px';
+    tip.style.display = 'block';
+  }
+  function hideTip() { const tip = document.getElementById('chartTooltip'); if (tip) tip.style.display = 'none'; }
+
+  // ---------------- Donut (SVG ring, real hoverable segments) ----------------
+  function renderDonut(breakdown, total) {
+    const colors = { open: '#16a34a', full: '#0b0b0c', completed: '#2563eb', cancelled: '#dc2626', live: '#d97706', draft: '#9a9ca6' };
+    const labels = { open: 'Open', full: 'Full', completed: 'Completed', cancelled: 'Cancelled', live: 'Live', draft: 'Draft' };
+    const wrap = document.getElementById('donutWrap');
+    if (!total) {
+      wrap.innerHTML = `<div class="empty-state" style="padding:20px 0;">No scrims created yet</div>`;
+      return;
+    }
+
+    const size = 150, cx = size/2, cy = size/2, r = 58, stroke = 20;
+    const circumference = 2 * Math.PI * r;
+    let offset = 0;
+    const segments = Object.entries(breakdown).filter(([,v]) => v > 0);
+
+    const arcs = segments.map(([key, val]) => {
+      const pct = val / total;
+      const dash = pct * circumference;
+      const el = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${colors[key] || '#9a9ca6'}"
+        stroke-width="${stroke}" stroke-dasharray="${dash} ${circumference - dash}"
+        stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"
+        style="cursor:pointer; transition:opacity .15s;"
+        data-key="${key}" data-val="${val}" data-pct="${Math.round(pct*100)}"/>`;
+      offset += dash;
+      return el;
+    }).join('');
+
+    wrap.innerHTML = `
+      <div class="donut-wrap">
+        <div style="position:relative; width:${size}px; height:${size}px; flex-shrink:0;">
+          <svg id="statusDonutSvg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">${arcs}</svg>
+          <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none;">
+            <div style="font-size:22px; font-weight:700;">${total}</div>
+            <div style="font-size:10px; color:var(--text-muted);">Total Scrims</div>
+          </div>
+        </div>
+        <div class="donut-legend">
+          ${segments.map(([k,v]) => `
+            <div class="item" data-legend-key="${k}" style="cursor:pointer;"><i style="background:${colors[k] || '#9a9ca6'};"></i> ${labels[k] || k} <span>${v} (${Math.round(v/total*100)}%)</span></div>
+          `).join('')}
+        </div>
+      </div>`;
+
+    const svg = document.getElementById('statusDonutSvg');
+    svg.querySelectorAll('circle').forEach(seg => {
+      seg.addEventListener('mousemove', (e) => {
+        svg.querySelectorAll('circle').forEach(c => c.style.opacity = c === seg ? '1' : '.45');
+        const k = seg.dataset.key;
+        showTip(`<b>${labels[k] || k}</b><br>${seg.dataset.val} scrim${seg.dataset.val == 1 ? '' : 's'} (${seg.dataset.pct}%)`, e.clientX, e.clientY);
+      });
+      seg.addEventListener('mouseleave', () => {
+        svg.querySelectorAll('circle').forEach(c => c.style.opacity = '1');
+        hideTip();
+      });
+    });
+    wrap.querySelectorAll('[data-legend-key]').forEach(item => {
+      item.addEventListener('mouseenter', () => {
+        const k = item.dataset.legendKey;
+        svg.querySelectorAll('circle').forEach(c => c.style.opacity = c.dataset.key === k ? '1' : '.45');
+      });
+      item.addEventListener('mouseleave', () => svg.querySelectorAll('circle').forEach(c => c.style.opacity = '1'));
+    });
+  }
+
+  // ---------------- Earnings trend (SVG line, hover tracks nearest point) ----------------
+  function renderTrendSvg(trend) {
+    const w = 380, h = 160, padL = 34, padB = 22, padT = 10, padR = 10;
+    const max = Math.max(...trend.map(t => Number(t.amount)), 1);
+    const step = (w - padL - padR) / (trend.length - 1);
+    const yFor = (v) => padT + (1 - v / max) * (h - padT - padB);
+    const points = trend.map((t, i) => [padL + i * step, yFor(Number(t.amount))]);
+    const linePath = points.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+    const areaPath = linePath + ` L${points[points.length-1][0]},${h-padB} L${points[0][0]},${h-padB} Z`;
+    const gridLines = [0, 0.25, 0.5, 0.75, 1].map(f => {
+      const y = padT + f * (h - padT - padB);
+      const val = Math.round(max * (1 - f));
+      return `<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="var(--border)" stroke-width="1"/>
+              <text x="${padL - 6}" y="${y + 3}" font-size="9" fill="var(--text-muted)" text-anchor="end">${val >= 1000 ? Math.round(val/1000)+'K' : val}</text>`;
+    }).join('');
+    const dots = points.map((p, i) => `<circle class="trend-dot" data-i="${i}" cx="${p[0]}" cy="${p[1]}" r="3" fill="var(--accent)"/>`).join('');
+    const labels = trend.map((t, i) => `<text x="${points[i][0]}" y="${h-4}" font-size="9" fill="var(--text-muted)" text-anchor="middle">${t.date}</text>`).join('');
+
+    const svgEl = document.getElementById('trendSvg');
+    svgEl.innerHTML = `
+      <defs><linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.18"/>
+        <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+      </linearGradient></defs>
+      ${gridLines}
+      <path d="${areaPath}" fill="url(#areaFill)"/>
+      <path d="${linePath}" fill="none" stroke="var(--accent)" stroke-width="2"/>
+      <line id="trendGuide" x1="0" y1="${padT}" x2="0" y2="${h-padB}" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="3 3" style="display:none;"/>
+      ${dots}${labels}
+      <rect x="${padL}" y="0" width="${w-padL-padR}" height="${h}" fill="transparent" style="cursor:crosshair;" id="trendHoverArea"/>
+    `;
+
+    const hoverArea = document.getElementById('trendHoverArea');
+    const guide = document.getElementById('trendGuide');
+    hoverArea.addEventListener('mousemove', (e) => {
+      const rect = svgEl.getBoundingClientRect();
+      const scaleX = w / rect.width;
+      const mouseX = (e.clientX - rect.left) * scaleX;
+      let nearest = 0, best = Infinity;
+      points.forEach((p, i) => { const d = Math.abs(p[0] - mouseX); if (d < best) { best = d; nearest = i; } });
+      guide.setAttribute('x1', points[nearest][0]); guide.setAttribute('x2', points[nearest][0]);
+      guide.style.display = 'block';
+      svgEl.querySelectorAll('.trend-dot').forEach(d => d.setAttribute('r', d.dataset.i == nearest ? '5' : '3'));
+      showTip(`<b>${trend[nearest].date}</b><br>${money(Number(trend[nearest].amount))}`, e.clientX, e.clientY);
+    });
+    hoverArea.addEventListener('mouseleave', () => {
+      guide.style.display = 'none';
+      svgEl.querySelectorAll('.trend-dot').forEach(d => d.setAttribute('r', '3'));
+      hideTip();
+    });
+  }
+
+  async function quickReview(id, action) {
+    try {
+      await Api.post('/payments/review.php', { payment_id: id, action });
+      toast(action === 'approve' ? 'Payment approved' : 'Payment rejected', 'success');
+      setTimeout(() => location.reload(), 600);
+    } catch (err) { toast(err.message || 'Could not review payment.', 'error'); }
+  }
+  </script>
+</body>
+</html>

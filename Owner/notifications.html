@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications — Infinity Scrims Owner</title>
+ <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+</head>
+<body data-page="notifications">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content" data-skeleton="off">
+        <div class="breadcrumb"><a href="dashboard.html">Dashboard</a> &gt; <span class="current">Notifications</span></div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div><h1 class="page-title">Notifications</h1><p class="page-sub">Stay updated with all the important activities.</p></div>
+          <button class="btn btn-outline" onclick="markAllRead()">Mark all as read</button>
+        </div>
+
+        <!-- Send Notification -->
+        <div class="card" style="margin-top:20px;">
+          <div class="card-title">Send Notification</div>
+
+          <div style="display:flex; gap:8px; margin-bottom:16px;">
+            <span class="chip active" id="targetAllBtn" onclick="setTarget('all')">All Players</span>
+            <span class="chip" id="targetSpecificBtn" onclick="setTarget('specific')">Specific Players</span>
+          </div>
+
+          <!-- Specific players picker -->
+          <div id="specificPickerWrap" style="display:none; margin-bottom:16px;">
+            <div class="toolbar" style="margin-bottom:10px;">
+              <div class="search-field">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <input type="text" id="userSearchInput" placeholder="Search by name or email...">
+              </div>
+            </div>
+            <div id="userCheckboxList" style="max-height:220px; overflow-y:auto; border:1px solid var(--border); border-radius:10px;">
+              <p style="padding:16px; color:var(--text-muted); font-size:13px; margin:0;">Loading players...</p>
+            </div>
+            <p id="selectedCount" class="text-muted" style="font-size:12px; margin:8px 0 0;">0 selected</p>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label>Title</label>
+              <input type="text" id="bcTitle" maxlength="150" placeholder="e.g. New scrim posted!">
+            </div>
+            <div class="field">
+              <label>Type</label>
+              <select id="bcType">
+                <option value="system">System</option>
+                <option value="scrim">Scrim</option>
+                <option value="payment">Payment</option>
+                <option value="result">Result</option>
+                <option value="team">Team</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Message</label>
+            <textarea id="bcBody" maxlength="255" placeholder="Write the notification message..."></textarea>
+          </div>
+
+          <p id="bcMsg" class="text-danger" style="font-size:12px; display:none; margin-bottom:12px;"></p>
+          <p id="bcSuccess" class="text-success" style="font-size:13px; display:none; margin-bottom:12px;"></p>
+          <button class="btn" id="bcSendBtn" onclick="sendBroadcast()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/owner-common.js"></script>
+  <script>
+    // Own notifications now live in the bell drawer (top-right) — no separate list on this page.
+    async function markAllRead() {
+      try {
+        await Api.post('/notifications.php', {});
+        toast('All marked read', 'success');
+        NotifDrawer.load();
+      } catch (err) { toast(err.message, 'error'); }
+    }
+
+    // ================= Send Notification (broadcast / targeted) =================
+    let target = 'all';
+    let allUsers = [];
+    const selectedIds = new Set();
+
+    function setTarget(mode) {
+      target = mode;
+      document.getElementById('targetAllBtn').classList.toggle('active', mode === 'all');
+      document.getElementById('targetSpecificBtn').classList.toggle('active', mode === 'specific');
+      document.getElementById('specificPickerWrap').style.display = mode === 'specific' ? 'block' : 'none';
+      if (mode === 'specific' && allUsers.length === 0) loadUsers();
+    }
+    document.getElementById('targetAllBtn').addEventListener('click', () => setTarget('all'));
+    document.getElementById('targetSpecificBtn').addEventListener('click', () => setTarget('specific'));
+
+    async function loadUsers() {
+      const wrap = document.getElementById('userCheckboxList');
+      try {
+        const data = await Api.get('/notifications/users.php');
+        allUsers = data.users || [];
+        renderUserList(allUsers);
+      } catch (err) {
+        wrap.innerHTML = `<p style="padding:16px; color:var(--danger); font-size:13px; margin:0;">${escapeHtml(err.message)}</p>`;
+      }
+    }
+
+    function renderUserList(users) {
+      const wrap = document.getElementById('userCheckboxList');
+      wrap.innerHTML = users.length ? users.map(u => `
+        <label style="display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); cursor:pointer;">
+          <input type="checkbox" value="${u.id}" ${selectedIds.has(u.id) ? 'checked' : ''} onchange="toggleUser(${u.id}, this.checked)">
+          <span style="font-size:13px;">${escapeHtml(u.username)} <span class="text-muted">&middot; ${escapeHtml(u.email)}</span></span>
+        </label>
+      `).join('') : `<p style="padding:16px; color:var(--text-muted); font-size:13px; margin:0;">No players found.</p>`;
+    }
+
+    function toggleUser(id, checked) {
+      if (checked) selectedIds.add(id); else selectedIds.delete(id);
+      document.getElementById('selectedCount').textContent = `${selectedIds.size} selected`;
+    }
+
+    document.getElementById('userSearchInput').addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      renderUserList(allUsers.filter(u => u.username.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)));
+    });
+
+    async function sendBroadcast() {
+      const msgBox = document.getElementById('bcMsg');
+      const successBox = document.getElementById('bcSuccess');
+      msgBox.style.display = 'none';
+      successBox.style.display = 'none';
+
+      const title = document.getElementById('bcTitle').value.trim();
+      const body = document.getElementById('bcBody').value.trim();
+      const type = document.getElementById('bcType').value;
+
+      if (!title || !body) {
+        msgBox.textContent = 'Title and message are both required.';
+        msgBox.style.display = 'block';
+        return;
+      }
+      if (target === 'specific' && selectedIds.size === 0) {
+        msgBox.textContent = 'Select at least one player, or switch to "All Players".';
+        msgBox.style.display = 'block';
+        return;
+      }
+
+      const confirmText = target === 'all'
+        ? 'This notification will be sent to all players. Confirm?'
+        : `This notification will be sent to ${selectedIds.size} selected player(s). Confirm?`;
+      if (!confirm(confirmText)) return;
+
+      const btn = document.getElementById('bcSendBtn');
+      btn.disabled = true; btn.textContent = 'Sending...';
+      try {
+        const payload = { title, body, type };
+        if (target === 'specific') payload.user_ids = Array.from(selectedIds);
+
+        const data = await Api.post('/notifications/broadcast.php', payload);
+        successBox.textContent = `Sent to ${data.sent_count} player(s) ✓`;
+        successBox.style.display = 'block';
+        document.getElementById('bcTitle').value = '';
+        document.getElementById('bcBody').value = '';
+        selectedIds.clear();
+        document.getElementById('selectedCount').textContent = '0 selected';
+        if (target === 'specific') renderUserList(allUsers);
+      } catch (err) {
+        msgBox.textContent = err.message || 'Could not send notification.';
+        msgBox.style.display = 'block';
+      } finally {
+        btn.disabled = false; btn.textContent = 'Send';
+      }
+    }
+  </script>
+</body>
+</html>

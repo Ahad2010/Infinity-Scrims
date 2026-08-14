@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teams — Infinity Scrims Owner</title>
+ <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+</head>
+<body data-page="teams">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content" data-skeleton="off">
+        <div class="breadcrumb"><a href="dashboard.html">Dashboard</a> &gt; <span class="current">Teams</span></div>
+        <h1 class="page-title">Teams</h1>
+        <p class="page-sub">All teams created by players — view members and ban/unban when needed.</p>
+
+        <div class="table-wrap card">
+          <table>
+            <thead><tr><th>Team</th><th>Captain</th><th>Members</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="teamsBody"><tr><td colspan="5"><div class="skeleton skeleton-line"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+
+  <!-- Team members modal -->
+  <div class="modal-overlay" id="membersModal">
+    <div class="modal" style="max-width:560px;">
+      <h3 id="membersModalTitle">Team Members</h3>
+      <div id="membersList" style="margin:14px 0; display:flex; flex-direction:column; gap:10px; max-height:60vh; overflow-y:auto;"></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline btn-block" onclick="closeModal('membersModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/owner-common.js"></script>
+  <script>
+    let teamsCache = [];
+
+    async function loadTeams() {
+      try {
+        const data = await Api.get('/teams/all.php');
+        teamsCache = data.teams;
+        document.getElementById('teamsBody').innerHTML = teamsCache.length ? teamsCache.map(t => `
+          <tr>
+            <td>
+              <div style="font-weight:600;">${escapeHtml(t.name)} ${t.tag ? `<span style="color:var(--text-muted);">#${escapeHtml(t.tag)}</span>` : ''}</div>
+            </td>
+            <td><div style="font-weight:600;">${escapeHtml(t.captain_name)}</div><div style="font-size:11px; color:var(--text-muted);">${escapeHtml(t.captain_email)}</div></td>
+            <td>${t.member_count}</td>
+            <td><span class="badge ${t.status === 'banned' ? 'badge-danger' : 'badge-success'}">${t.status}</span></td>
+            <td>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="btn btn-sm btn-outline" onclick="viewMembers(${t.id})">Members</button>
+                ${t.status === 'banned'
+                  ? `<button class="btn btn-sm" onclick="toggleTeamBan(${t.id}, 'unban')">Unban Team</button>`
+                  : `<button class="btn btn-sm btn-danger" onclick="toggleTeamBan(${t.id}, 'ban')">Ban Team</button>`}
+              </div>
+            </td>
+          </tr>
+        `).join('') : `<tr><td colspan="5"><div class="empty-state">No teams yet</div></td></tr>`;
+      } catch (err) { toast(err.message, 'error'); }
+    }
+
+    async function toggleTeamBan(teamId, action) {
+      const msg = action === 'ban'
+        ? 'Ban this team? All its members will be banned and unable to log in.'
+        : 'Unban this team? All its members will be able to log in again.';
+      if (!confirm(msg)) return;
+      try {
+        await Api.post('/teams/ban.php', { team_id: teamId, action });
+        toast(action === 'ban' ? 'Team banned.' : 'Team unbanned.', 'success');
+        loadTeams();
+      } catch (err) { toast(err.message, 'error'); }
+    }
+
+    async function viewMembers(teamId) {
+      const team = teamsCache.find(t => t.id === teamId);
+      document.getElementById('membersModalTitle').textContent = team ? `${team.name} — Members` : 'Team Members';
+      document.getElementById('membersList').innerHTML = `<div class="skeleton skeleton-line"></div>`;
+      document.getElementById('membersModal').classList.add('open');
+      try {
+        const data = await Api.get('/teams/members.php?team_id=' + teamId);
+        document.getElementById('membersList').innerHTML = data.members.map(m => `
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px; border:1px solid var(--border); border-radius:8px;">
+            <div>
+              <div style="font-weight:600;">${escapeHtml(m.username)} ${m.role === 'captain' ? '<span class="badge badge-muted">Captain</span>' : ''}</div>
+              <div style="font-size:11px; color:var(--text-muted);">${escapeHtml(m.email)}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="badge ${m.status === 'banned' ? 'badge-danger' : 'badge-success'}">${m.status}</span>
+              ${m.status === 'banned'
+                ? `<button class="btn btn-sm" onclick="toggleUserBan(${m.id}, 'unban', ${teamId})">Unban</button>`
+                : `<button class="btn btn-sm btn-danger" onclick="toggleUserBan(${m.id}, 'ban', ${teamId})">Ban</button>`}
+            </div>
+          </div>
+        `).join('');
+      } catch (err) { toast(err.message, 'error'); }
+    }
+
+    async function toggleUserBan(userId, action, teamId) {
+      const msg = action === 'ban' ? 'Ban this user? They will not be able to log in.' : 'Unban this user?';
+      if (!confirm(msg)) return;
+      try {
+        await Api.post('/users/ban.php', { user_id: userId, action });
+        toast(action === 'ban' ? 'User banned.' : 'User unbanned.', 'success');
+        viewMembers(teamId);
+        loadTeams();
+      } catch (err) { toast(err.message, 'error'); }
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    loadTeams();
+  </script>
+</body>
+</html>

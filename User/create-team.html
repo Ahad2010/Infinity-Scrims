@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Team — Infinity Scrims</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.webp">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.webp">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.webp">
+</head>
+<body data-page="my-teams">
+  <div class="app">
+    <div id="sidebar-mount"></div>
+    <div class="main">
+      <div id="header-mount"></div>
+      <div class="page-content">
+        <div class="breadcrumb"><a href="dashboard.html">Dashboard</a> &gt; <a href="my-teams.html">My Teams</a> &gt; <span class="current">Create Team</span></div>
+        <h1 class="page-title">Create New Team</h1>
+        <p class="page-sub">Fill in the details below to create your team. You'll be the captain — only you can book slots, submit payments, and manage members.</p>
+
+        <div class="card" style="max-width:640px;">
+          <div class="form-section">
+            <div class="form-section-title">1. Team Information</div>
+            <div class="field"><label>Team Name <span class="req">*</span></label><input type="text" id="ctName" placeholder="e.g. Exodus Esports"></div>
+            <div class="form-row">
+              <div class="field"><label>Tag <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label><input type="text" id="ctTag" placeholder="e.g. EXO" maxlength="10"></div>
+              <div class="field">
+                <label>Team Logo <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label>
+                <div class="logo-upload-row">
+                  <div class="logo-upload-preview" id="ctLogoPreview"></div>
+                  <div class="logo-upload-input"><input type="file" id="ctLogo" accept="image/png,image/jpeg,image/webp"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">2. Your Player Details</div>
+            <div class="form-row">
+              <div class="field"><label>Your In-Game Name <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label><input type="text" id="ctIgn" placeholder="e.g. ShadowSnipe"></div>
+              <div class="field"><label>Your In-Game ID <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label><input type="text" id="ctIgid" placeholder="e.g. 5123456789"></div>
+            </div>
+          </div>
+
+          <div class="form-section" style="margin-bottom:8px;">
+            <div class="form-section-title">3. Team Contact <span style="font-weight:400; color:var(--text-muted); font-size:12px;">(shown when booking slots)</span></div>
+            <div class="form-row">
+              <div class="field"><label>Phone</label><input type="tel" id="ctPhone" placeholder="03xx-xxxxxxx"></div>
+              <div class="field"><label>WhatsApp</label><input type="tel" id="ctWhatsapp" placeholder="03xx-xxxxxxx"></div>
+            </div>
+            <div class="field"><label>Discord ID <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label><input type="text" id="ctDiscord" placeholder="username#1234"></div>
+          </div>
+
+          <p id="ctMsg" class="text-danger" style="font-size:12px; display:none; margin-bottom:12px;"></p>
+          <div style="display:flex; gap:10px;">
+            <a href="my-teams.html" class="btn btn-outline">Cancel</a>
+            <button class="btn" id="ctSubmitBtn" onclick="submitCreateTeam()">Create Team</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="bottomnav-mount"></div>
+  <div id="support-widget-mount"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/support-widget.js"></script>
+  <script>
+    // ---------------- Logo upload live preview ----------------
+    function setLogoPreview(preview, src) {
+      preview.innerHTML = src ? `<img src="${src}" alt="Logo preview">` : ICONS.image;
+    }
+    const ctLogoInput = document.getElementById('ctLogo');
+    const ctLogoPreview = document.getElementById('ctLogoPreview');
+    setLogoPreview(ctLogoPreview, null);
+    ctLogoInput.addEventListener('change', () => {
+      const file = ctLogoInput.files[0];
+      if (!file) { setLogoPreview(ctLogoPreview, null); return; }
+      const reader = new FileReader();
+      reader.onload = (e) => setLogoPreview(ctLogoPreview, e.target.result);
+      reader.readAsDataURL(file);
+    });
+
+    // ---------------- Create team ----------------
+    async function submitCreateTeam() {
+      const name = document.getElementById('ctName').value.trim();
+      const msg = document.getElementById('ctMsg');
+      msg.style.display = 'none';
+      if (name.length < 3) {
+        msg.textContent = 'Team name must be at least 3 characters.';
+        msg.style.display = 'block';
+        return;
+      }
+      const btn = document.getElementById('ctSubmitBtn');
+      btn.disabled = true; btn.textContent = 'Creating...';
+      try {
+        const fd = new FormData();
+        fd.append('name', name);
+        fd.append('tag', document.getElementById('ctTag').value.trim());
+        fd.append('in_game_name', document.getElementById('ctIgn').value.trim());
+        fd.append('in_game_id', document.getElementById('ctIgid').value.trim());
+        fd.append('phone', document.getElementById('ctPhone').value.trim());
+        fd.append('whatsapp', document.getElementById('ctWhatsapp').value.trim());
+        fd.append('discord_id', document.getElementById('ctDiscord').value.trim());
+        const logoFile = ctLogoInput.files[0];
+        if (logoFile) fd.append('logo', logoFile);
+
+        const data = await Api.postForm('/teams/create.php', fd);
+        // Hand off the join code to my-teams.html via query param — it shows
+        // a one-time success banner there and copy-to-clipboard button.
+        window.location.href = 'my-teams.html?created=' + encodeURIComponent(data.join_code || '');
+      } catch (err) {
+        msg.textContent = err.message || 'Could not create team.';
+        msg.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'Create Team';
+      }
+    }
+  </script>
+</body>
+</html>
