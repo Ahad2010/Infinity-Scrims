@@ -2,55 +2,82 @@
 
 ```
 infinity-scrims/
-├── backend/    → PHP + MySQL API (api, config, includes, cron, sql — untouched original structure)
-├── User/       → user-facing frontend
-├── Owner/      → owner dashboard frontend
-└── vercel.json → routes everything onto one domain
+├── backend/    → PHP + MySQL API — deploy this on Railway
+├── User/       → user-facing frontend — deploy on Vercel (or Netlify)
+├── Owner/      → owner dashboard frontend — deploy on Vercel (or Netlify)
+└── vercel.json → routes User (root) + Owner (/Owner) as static sites
 ```
 
-With `vercel.json` as-is, on Vercel this becomes:
-- `yourdomain.com/` → **User** frontend
-- `yourdomain.com/Owner/` → **Owner** frontend
-- `yourdomain.com/api/...` → **backend** (`backend/api/...`)
+Backend and frontends go on **different platforms**: Railway runs PHP
+natively (no hacks, uploads persist), Vercel/Netlify are great for static
+HTML. They talk to each other over HTTPS.
 
-Both frontends' `assets/js/app.js` now call `API_BASE = '/api'` (relative)
-instead of the old `http://localhost/...` — same domain, no CORS needed.
+## 1. Deploy the backend on Railway
 
-## ⚠️ Before you deploy
+1. [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo**
+   → pick `Ahad2010/Infinity-Scrims`.
+2. When adding the service, set **Root Directory** to `backend`. Railway
+   will find the `Dockerfile` there automatically and build it (PHP 8.2 +
+   Apache, mysqli/pdo_mysql enabled).
+3. **Add MySQL**: in the same Railway project, **New → Database → MySQL**.
+   Railway creates it and shows connection credentials in its Variables tab.
+4. Import the schema: connect to that MySQL (Railway gives you a connection
+   string, or use its built-in **Data** tab / any MySQL client) and run
+   `backend/sql/schema.sql` against it.
+5. On the **backend service** → **Variables**, add (matching `backend/.env.example`):
 
-1. **PHP isn't a Vercel-native runtime.** `vercel.json` uses the community
-   `vercel-php` runtime for `backend/api/**/*.php`. Works for simple
-   request/response APIs like this, but it's not officially maintained by
-   Vercel — treat it as "should work," test after deploying.
-2. **MySQL needs an external host** (Vercel doesn't host MySQL) — e.g.
-   PlanetScale, Aiven, Railway. Import `backend/sql/schema.sql` there, then
-   set `DB_HOST/DB_NAME/DB_USER/DB_PASS` as Vercel env vars.
-3. **File uploads won't persist** — `backend/uploads/...` is written to
-   local disk in the PHP code, but serverless filesystems are read-only.
-   Avatars/results/payment screenshots will vanish after upload. Fixing
-   this needs the upload code moved to Vercel Blob or S3 — say the word if
-   you want that done.
-4. **Cron:** added `backend/api/cron-cleanup.php` (same logic as
-   `backend/cron/cleanup.php`, but callable over HTTP) and wired it into
-   `vercel.json`'s `"crons"` to run every 5 minutes.
+   | Key | Value |
+   |---|---|
+   | `DB_HOST` | from the MySQL service's variables |
+   | `DB_NAME` | from the MySQL service's variables |
+   | `DB_USER` | from the MySQL service's variables |
+   | `DB_PASS` | from the MySQL service's variables |
+   | `JWT_SECRET` | random string (`openssl rand -hex 32`) |
+   | `AI_API_KEY` | your **new** (rotated) Groq key |
+   | `RESEND_API_KEY` | if you want email verification |
+   | `APP_DEBUG` | `false` |
+   | `CORS_ORIGIN` | your Vercel frontend URL, once you have it (e.g. `https://infinityscrims.vercel.app`) — needed since backend and frontend are different domains |
 
-If the PHP runtime gives you deploy trouble, the sturdier setup is: host
-`backend/` on an actual PHP host (Railway, Render, Hostinger, a VPS), and
-keep only `User/` + `Owner/` on Vercel, pointing their `API_BASE` at that
-backend's real URL instead of `/api`.
+6. **Settings → Networking → Generate Domain** — Railway gives you a public
+   URL like `https://infinity-scrims-backend-production.up.railway.app`.
+   Copy it.
+7. (Optional but recommended) For persistent uploads, add a **Volume**
+   mounted at `/var/www/html/uploads` in the service's Settings — otherwise
+   uploaded avatars/results/payment screenshots are lost on every redeploy.
+8. (Optional) Cron cleanup: `backend/api/cron-cleanup.php` is an HTTP
+   endpoint (same logic as `backend/cron/cleanup.php`). Either add a Railway
+   **Cron Job** that curls it every 5 min, or use a free pinger like
+   cron-job.org pointed at `https://YOUR-RAILWAY-URL/api/cron-cleanup.php`.
 
-## Deploy steps
+Test it: open `https://YOUR-RAILWAY-URL/api/scrims/list.php` — should return JSON.
 
-1. Push this folder to GitHub, import into Vercel.
-2. Vercel → Settings → Environment Variables: fill in everything from
-   `backend/.env.example` (DB_*, JWT_SECRET, AI_API_KEY, RESEND_API_KEY,
-   BASE_URL = your Vercel URL, etc.)
-3. Run `backend/sql/schema.sql` on your external MySQL DB.
-4. Deploy, then test `yourdomain.com/api/scrims/list.php` — should return JSON.
-5. Register a user, then in the DB: `UPDATE users SET role='owner' WHERE email='you@example.com';`
+## 2. Point the frontends at that URL
+
+Open both:
+- `User/assets/js/app.js`
+- `Owner/assets/js/app.js`
+
+and replace this line near the top:
+```js
+const RAILWAY_BACKEND_URL = 'PASTE_YOUR_RAILWAY_URL_HERE';
+```
+with your real Railway URL, e.g.:
+```js
+const RAILWAY_BACKEND_URL = 'https://infinity-scrims-backend-production.up.railway.app';
+```
+Commit and push — this line is ignored automatically when testing locally
+under XAMPP/Laragon (it detects the local folder path instead).
+
+## 3. Deploy the frontends on Vercel
+
+1. [vercel.com](https://vercel.com) → **Add New → Project** → import the same repo.
+2. Project name must be lowercase. Root Directory stays `./`.
+3. Deploy — `vercel.json` routes `/` to `User/` and `/Owner` to `Owner/`.
+4. Once you have the Vercel URL, go back to Railway → backend service →
+   Variables → set `CORS_ORIGIN` to that URL, then redeploy the backend.
 
 ## Note on your API key
 
-Your uploaded backend's real `.env` had a live Groq key in it. It's **not**
-included in this package (only `.env.example` with blanks) — worth rotating
-that key at console.groq.com/keys since it was shared in this chat.
+Your original `.env` had a live Groq key in it — it's not included in this
+package (only `.env.example`, blank). Rotate it at console.groq.com/keys
+since it was shared in chat, then use the new key in Railway's Variables.

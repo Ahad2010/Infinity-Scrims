@@ -7,7 +7,24 @@
 // ---------------------------------------------------------------
 // CONFIG — point this at your backend
 // ---------------------------------------------------------------
-const API_BASE = '/api';
+// After deploying the backend/ folder to Railway, paste the URL Railway
+// gives you here (Settings → Domains → Generate Domain). Example:
+//   'https://infinity-scrims-backend-production.up.railway.app'
+// Leave it as-is for local testing — it's ignored on localhost/XAMPP.
+const RAILWAY_BACKEND_URL = 'PASTE_YOUR_RAILWAY_URL_HERE';
+
+const API_BASE = (() => {
+    // Local XAMPP/Laragon: whole "infinity-scrims" folder sits under htdocs,
+    // so build the path back down into backend/api instead of a domain.
+    const marker = '/infinity-scrims/';
+    const path = window.location.pathname;
+    const idx = path.indexOf(marker);
+    if (idx !== -1) {
+        return path.substring(0, idx + marker.length) + 'backend/api';
+    }
+    // Production: frontend (Vercel) and backend (Railway) are different domains.
+    return RAILWAY_BACKEND_URL.replace(/\/$/, '') + '/api';
+})();
 
 // ---------------------------------------------------------------
 // THEME
