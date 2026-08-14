@@ -24,7 +24,7 @@ foreach ($rows as &$r) {
     $r['revenue_txt'] = money($r['revenue']);
     $r['price_txt']   = money($r['price_per_slot']);
     $r['has_published_result'] = (int) $r['has_published_result'] > 0;
-    if ($r['banner']) $r['banner'] = UPLOAD_URL . '/' . $r['banner'];
+    if ($r['banner']) $r['banner'] = img_url($r['banner']);
 }
 
 ok(['scrims' => $rows]);

@@ -52,7 +52,7 @@ $stats = DB::one(
 $totalWon = 0;
 foreach ($rows as &$r) {
     $r['amount_txt']     = money($r['amount']);
-    $r['screenshot_url'] = $r['screenshot'] ? UPLOAD_URL . '/' . $r['screenshot'] : null;
+    $r['screenshot_url'] = $r['screenshot'] ? img_url($r['screenshot']) : null;
     $r['prize_won']      = (float) $r['prize_won'];
     $r['prize_won_txt']  = money($r['prize_won']);
     // Profit/loss only counts once the scrim's result is published — before that,

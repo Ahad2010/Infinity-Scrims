@@ -32,7 +32,7 @@ foreach ($rows as &$row) {
     $row['total_kills'] = (int)$row['total_kills'];
     $row['matches']     = (int)$row['matches'];
     $row['wins']        = (int)$row['wins'];
-    if ($row['logo']) $row['logo'] = UPLOAD_URL . '/' . $row['logo'];
+    if ($row['logo']) $row['logo'] = img_url($row['logo']);
 }
 
 ok(['range' => $range, 'leaderboard' => $rows, 'updated_at' => date('d M Y, h:i A')]);

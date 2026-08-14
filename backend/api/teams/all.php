@@ -12,7 +12,7 @@ $teams = DB::all(
      ORDER BY t.created_at DESC");
 
 foreach ($teams as &$t) {
-    if ($t['logo']) $t['logo_url'] = UPLOAD_URL . '/' . $t['logo'];
+    if ($t['logo']) $t['logo_url'] = img_url($t['logo']);
 }
 
 ok(['teams' => $teams]);

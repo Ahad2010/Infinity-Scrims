@@ -23,7 +23,7 @@ $rows = DB::all(
 foreach ($rows as &$r) {
     $r['amount_txt'] = money($r['amount']);
     $r['waiting']    = time_ago($r['created_at']);
-    $r['screenshot_url'] = UPLOAD_URL . '/' . $r['screenshot'];
+    $r['screenshot_url'] = img_url($r['screenshot']);
 
     // Scrim-level prize pool / profit context (profit only means something once the scrim has started)
     $prizePool = (float)$r['prize_top1'] + (float)$r['prize_top2'] + (float)$r['prize_top3'];

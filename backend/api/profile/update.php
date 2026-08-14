@@ -62,6 +62,6 @@ $fresh = DB::one(
     "SELECT id, username, email, phone, avatar, role, status, theme FROM users WHERE id = ?",
     [$u['id']]
 );
-if ($fresh['avatar']) $fresh['avatar_url'] = UPLOAD_URL . '/' . $fresh['avatar'];
+if ($fresh['avatar']) $fresh['avatar_url'] = img_url($fresh['avatar']);
 
 ok(['user' => $fresh], 'Profile updated.');

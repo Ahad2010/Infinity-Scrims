@@ -21,6 +21,14 @@ define('ROOT_PATH', dirname(__DIR__));
 define('UPLOAD_PATH', ROOT_PATH . '/uploads');
 define('UPLOAD_URL',  BASE_URL . '/uploads');
 
+// ---------- Cloudinary (image uploads) ----------
+// Railway's disk is ephemeral, so avatars/team logos/banners/results/payment
+// screenshots upload straight to Cloudinary instead of local disk.
+// Get these three from your Cloudinary dashboard (cloudinary.com/console).
+define('CLOUDINARY_CLOUD_NAME', DotEnv::get('CLOUDINARY_CLOUD_NAME', ''));
+define('CLOUDINARY_API_KEY', DotEnv::get('CLOUDINARY_API_KEY', ''));
+define('CLOUDINARY_API_SECRET', DotEnv::get('CLOUDINARY_API_SECRET', ''));
+
 // ---------- Business rules ----------
 define('CURRENCY', 'PKR');
 define('SLOT_HOLD_MINUTES', 15);   // itni der slot hold rahega payment ke liye

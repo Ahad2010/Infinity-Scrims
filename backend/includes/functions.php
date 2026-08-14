@@ -83,7 +83,11 @@ function random_code(int $len = 8): string
     return $out;
 }
 
-// ---------- File upload ----------
+// ---------- File upload (Cloudinary) ----------
+// Railway's filesystem is ephemeral (no volume needed, no lost files on
+// redeploy), so uploads go straight to Cloudinary instead of local disk.
+// upload_image() now returns a full https:// URL, which is stored directly
+// in the DB (see img_url() below for how it's read back).
 function upload_image(string $field, string $folder): string
 {
     if (!isset($_FILES[$field]) || $_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
@@ -102,14 +106,53 @@ function upload_image(string $field, string $folder): string
 
     if (!isset($allowed[$mime])) fail('Only JPG, PNG or WEBP are allowed.', 422);
 
-    $dir = UPLOAD_PATH . '/' . $folder;
-    if (!is_dir($dir)) mkdir($dir, 0775, true);
-
-    $name = $folder . '_' . time() . '_' . random_code(6) . '.' . $allowed[$mime];
-    if (!move_uploaded_file($file['tmp_name'], $dir . '/' . $name)) {
-        fail('Could not save file.', 500);
+    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
+        fail('Image upload is not configured (Cloudinary env vars missing).', 500);
     }
-    return $folder . '/' . $name;   // DB mein relative path
+
+    $timestamp = time();
+    $cloudFolder = 'infinity-scrims/' . $folder;
+    $params = ['folder' => $cloudFolder, 'timestamp' => $timestamp];
+    ksort($params);
+    $paramString = '';
+    foreach ($params as $k => $v) $paramString .= ($paramString !== '' ? '&' : '') . $k . '=' . $v;
+    $signature = sha1($paramString . CLOUDINARY_API_SECRET);
+
+    $postFields = [
+        'file'      => new CURLFile($file['tmp_name'], $mime, $field),
+        'api_key'   => CLOUDINARY_API_KEY,
+        'timestamp' => $timestamp,
+        'folder'    => $cloudFolder,
+        'signature' => $signature,
+    ];
+
+    $ch = curl_init('https://api.cloudinary.com/v1_1/' . CLOUDINARY_CLOUD_NAME . '/image/upload');
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    $response = curl_exec($ch);
+    $curlErr  = curl_error($ch);
+    curl_close($ch);
+
+    if ($curlErr) fail('Image upload failed (network): ' . $curlErr, 500);
+
+    $data = json_decode($response, true);
+    if (!isset($data['secure_url'])) {
+        fail('Image upload failed: ' . ($data['error']['message'] ?? 'unknown Cloudinary error'), 500);
+    }
+
+    return $data['secure_url'];   // full URL, stored as-is in DB
+}
+
+// Reads an image field back out — handles both new Cloudinary URLs (full
+// https://...) and any older rows still holding a local relative path from
+// before the Cloudinary switch.
+function img_url(?string $path): ?string
+{
+    if (!$path) return null;
+    if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) return $path;
+    return UPLOAD_URL . '/' . $path;
 }
 
 // ---------- Notifications ----------

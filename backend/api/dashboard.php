@@ -93,7 +93,7 @@ $upcoming = DB::all(
      FROM bookings b JOIN slots sl ON sl.id=b.slot_id JOIN scrims s ON s.id=b.scrim_id
      WHERE b.booked_by=? AND b.status IN ('pending','confirmed') AND s.match_at>=NOW()
      ORDER BY s.match_at ASC LIMIT 5", [$u['id']]);
-foreach ($upcoming as &$up) if ($up['banner']) $up['banner'] = UPLOAD_URL . '/' . $up['banner'];
+foreach ($upcoming as &$up) if ($up['banner']) $up['banner'] = img_url($up['banner']);
 
 $activity = DB::all("SELECT type, title, body, created_at FROM notifications
                      WHERE user_id=? ORDER BY id DESC LIMIT 6", [$u['id']]);
@@ -106,7 +106,7 @@ $explore = DB::all(
      FROM scrims s JOIN games g ON g.id=s.game_id
      WHERE s.status='open' AND s.match_at>=NOW()
      ORDER BY s.match_at ASC LIMIT 4");
-foreach ($explore as &$ex) if ($ex['banner']) $ex['banner'] = UPLOAD_URL . '/' . $ex['banner'];
+foreach ($explore as &$ex) if ($ex['banner']) $ex['banner'] = img_url($ex['banner']);
 
 // Latest scrims the owner has posted — dashboard headline cards. A scrim
 // stays in this list until its result is published (results/publish.php
@@ -123,7 +123,7 @@ $latestScrims = DB::all(
      WHERE s.status IN ('open','full','live')
      ORDER BY s.created_at DESC LIMIT 4");
 foreach ($latestScrims as &$ls) {
-    if ($ls['banner']) $ls['banner'] = UPLOAD_URL . '/' . $ls['banner'];
+    if ($ls['banner']) $ls['banner'] = img_url($ls['banner']);
     $myBooking = DB::one(
         "SELECT b.status, b.booked_by, bu.username AS booked_by_username
          FROM bookings b JOIN team_members tm ON tm.team_id = b.team_id

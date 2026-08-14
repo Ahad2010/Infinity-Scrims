@@ -32,7 +32,7 @@ foreach ($scrims as &$s) {
     $s['remaining'] = (int)$s['total_slots'] - (int)$s['booked_slots'];
     $s['is_full']   = $s['remaining'] <= 0;
     $s['price_txt'] = money($s['price_per_slot']);
-    if ($s['banner']) $s['banner'] = UPLOAD_URL . '/' . $s['banner'];
+    if ($s['banner']) $s['banner'] = img_url($s['banner']);
 }
 
 ok(['scrims' => $scrims, 'page' => $page, 'total' => $total, 'pages' => (int)ceil($total / $limit)]);

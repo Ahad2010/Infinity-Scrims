@@ -44,6 +44,6 @@ if (empty($update)) fail('Nothing was provided to update.', 422);
 DB::update('teams', $update, 'id = :id', ['id' => $teamId]);
 
 $fresh = DB::one("SELECT id, name, tag, logo, phone, whatsapp, discord_id, join_code, created_at FROM teams WHERE id = ?", [$teamId]);
-if ($fresh['logo']) $fresh['logo_url'] = UPLOAD_URL . '/' . $fresh['logo'];
+if ($fresh['logo']) $fresh['logo_url'] = img_url($fresh['logo']);
 
 ok(['team' => $fresh], 'Team updated.');

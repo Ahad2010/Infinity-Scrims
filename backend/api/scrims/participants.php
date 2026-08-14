@@ -26,8 +26,8 @@ $rows = DB::all(
 
 foreach ($rows as &$r) {
     $r['amount_txt'] = money($r['amount']);
-    $r['screenshot_url'] = $r['screenshot'] ? UPLOAD_URL . '/' . $r['screenshot'] : null;
-    $r['logo_url'] = $r['logo'] ? UPLOAD_URL . '/' . $r['logo'] : null;
+    $r['screenshot_url'] = $r['screenshot'] ? img_url($r['screenshot']) : null;
+    $r['logo_url'] = $r['logo'] ? img_url($r['logo']) : null;
     $r['prize_won'] = $r['prize_won'] !== null ? (float)$r['prize_won'] : null;
     $r['prize_won_txt'] = $r['prize_won'] !== null ? money($r['prize_won']) : null;
 }

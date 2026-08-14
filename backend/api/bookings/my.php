@@ -38,7 +38,7 @@ foreach ($rows as &$r) {
     $r['needs_payment'] = ($r['status'] === 'pending' && $r['payment_status'] === null);
     // Frontend can show "Booked by you" vs "Booked by <name>" using this.
     $r['booked_by_me'] = ((int)$r['booked_by'] === (int)$u['id']);
-    if ($r['banner']) $r['banner'] = UPLOAD_URL . '/' . $r['banner'];
+    if ($r['banner']) $r['banner'] = img_url($r['banner']);
 // Group link / stream link only make sense once the team is actually confirmed in.
     if ($r['status'] !== 'confirmed') { $r['group_link'] = null; $r['live_stream_link'] = null; }
 }

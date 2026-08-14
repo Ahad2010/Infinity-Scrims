@@ -11,7 +11,7 @@ $teams = DB::all(
      ORDER BY t.created_at DESC", [$u['id']]);
 
 foreach ($teams as &$t) {
-    if ($t['logo']) $t['logo_url'] = UPLOAD_URL . '/' . $t['logo'];
+    if ($t['logo']) $t['logo_url'] = img_url($t['logo']);
     $t['members'] = DB::all(
         "SELECT tm.role, tm.in_game_name, tm.in_game_id, u.id, u.username, u.avatar
          FROM team_members tm JOIN users u ON u.id = tm.user_id

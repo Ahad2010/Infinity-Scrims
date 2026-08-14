@@ -25,7 +25,7 @@ foreach ($slots as &$sl) {
 $s['booked_slots'] = $booked;
 $s['remaining']    = (int)$s['total_slots'] - $booked;
 $s['total_amount'] = (float)$s['price_per_slot'] + (float)$s['platform_fee'];
-if ($s['banner']) $s['banner'] = UPLOAD_URL . '/' . $s['banner'];
+if ($s['banner']) $s['banner'] = img_url($s['banner']);
 
 // Room ID sirf confirmed booking wale ko
 $s['room_id'] = $s['room_password'] = null;
